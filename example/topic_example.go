@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/gogap/logs"
-	"github.com/souriki/ali_mns"
+	"github.com/aliyun/aliyun-mns-go-sdk"
 )
 
 type appConf struct {
@@ -79,7 +79,7 @@ func main() {
 
 	// 4. now publish message
 	msg := ali_mns.MessagePublishRequest{
-		MessageBody: "hello topic <\"souriki/ali_mns\">",
+		MessageBody: "hello topic <\"aliyun-mns-go-sdk\">",
 		MessageAttributes: &ali_mns.MessageAttributes{
 			MailAttributes: &ali_mns.MailAttributes{
 				Subject:     "AAA中文",

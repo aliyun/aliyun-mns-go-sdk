@@ -9,7 +9,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/gogap/logs"
-	"github.com/souriki/ali_mns"
+	"github.com/aliyun/aliyun-mns-go-sdk"
 )
 
 type appConf struct {
@@ -38,7 +38,7 @@ func main() {
 		conf.AccessKeySecret)
 
 	msg := ali_mns.MessageSendRequest{
-		MessageBody:  "hello <\"souriki/ali_mns\">",
+		MessageBody:  "hello <\"aliyun-mns-go-sdk\">",
 		DelaySeconds: 0,
 		Priority:     8}
 
