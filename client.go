@@ -75,11 +75,15 @@ type aliMNSClient struct {
 }
 
 func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
+	return NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, "")
+}
+
+func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
 	if inputUrl == "" {
 		panic("ali-mns: message queue url is empty")
 	}
 
-	credential := NewAliMNSCredential(accessKeySecret)
+	credential := NewAliMNSCredential(accessKeySecret, token)
 
 	cli := new(aliMNSClient)
 	cli.credential = credential
@@ -194,6 +198,9 @@ func (p *aliMNSClient) Send(method Method, headers map[string]string, message in
 	headers[CONTENT_MD5] = base64.StdEncoding.EncodeToString([]byte(strMd5))
 	headers[DATE] = time.Now().UTC().Format(http.TimeFormat)
 
+	if p.credential.GetSecurityToken() != "" {
+		headers[SECURITY_TOKEN] = p.credential.GetSecurityToken()
+	}
 	if authHeader, e := p.authorization(method, headers, fmt.Sprintf("/%s", resource)); e != nil {
 		err = ERR_GENERAL_AUTH_HEADER_FAILED.New(errors.Params{"err": e})
 		return nil, err
