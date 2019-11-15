@@ -5,18 +5,18 @@ import (
 	"encoding/xml"
 )
 
-type notifyStrategyType string
+type NotifyStrategyType string
 
 const (
-	BACKOFF_RETRY           notifyStrategyType = "BACKOFF_RETRY"
-	EXPONENTIAL_DECAY_RETRY notifyStrategyType = "EXPONENTIAL_DECAY_RETRY"
+	BACKOFF_RETRY           NotifyStrategyType = "BACKOFF_RETRY"
+	EXPONENTIAL_DECAY_RETRY NotifyStrategyType = "EXPONENTIAL_DECAY_RETRY"
 )
 
-type notifyContentFormatType string
+type NotifyContentFormatType string
 
 const (
-	XML        notifyContentFormatType = "XML"
-	SIMPLIFIED notifyContentFormatType = "SIMPLIFIED"
+	XML        NotifyContentFormatType = "XML"
+	SIMPLIFIED NotifyContentFormatType = "SIMPLIFIED"
 )
 
 type MessageResponse struct {
@@ -111,8 +111,8 @@ type MessageSubsribeRequest struct {
 	XMLName             xml.Name                `xml:"Subscription"`
 	Endpoint            string                  `xml:"Endpoint"`
 	FilterTag           string                  `xml:"FilterTag,omitempty"`
-	NotifyStrategy      notifyStrategyType      `xml:"NotifyStrategy,omitempty"`
-	NotifyContentFormat notifyContentFormatType `xml:"NotifyContentFormat,omitempty"`
+	NotifyStrategy      NotifyStrategyType      `xml:"NotifyStrategy,omitempty"`
+	NotifyContentFormat NotifyContentFormatType `xml:"NotifyContentFormat,omitempty"`
 }
 
 type MessageSendResponse struct {
@@ -220,8 +220,8 @@ type SubscriptionAttribute struct {
 	TopicOwner          string                  `xml:"TopicOwner,omitempty" json:"topic_owner,omitempty"`
 	TopicName           string                  `xml:"TopicName,omitempty" json:"topic_name,omitempty"`
 	Endpoint            string                  `xml:"Endpoint,omitempty" json:"endpoint,omitempty"`
-	NotifyStrategy      notifyStrategyType      `xml:"NotifyStrategy,omitempty" json:"notify_strategy,omitempty"`
-	NotifyContentFormat notifyContentFormatType `xml:"NotifyContentFormat,omitempty" json:"notify_content_format,omitempty"`
+	NotifyStrategy      NotifyStrategyType      `xml:"NotifyStrategy,omitempty" json:"notify_strategy,omitempty"`
+	NotifyContentFormat NotifyContentFormatType `xml:"NotifyContentFormat,omitempty" json:"notify_content_format,omitempty"`
 	FilterTag           string                  `xml:"FilterTag,omitempty" json:"filter_tag,omitempty"`
 	CreateTime          int64                   `xml:"CreateTime,omitempty" json:"create_time,omitempty"`
 	LastModifyTime      int64                   `xml:"LastModifyTime,omitempty" json:"last_modify_time,omitempty"`
@@ -229,7 +229,7 @@ type SubscriptionAttribute struct {
 
 type SetSubscriptionAttributesRequest struct {
 	XMLName        xml.Name           `xml:"Subscription" json:"-"`
-	NotifyStrategy notifyStrategyType `xml:"NotifyStrategy,omitempty" json:"notify_strategy,omitempty"`
+	NotifyStrategy NotifyStrategyType `xml:"NotifyStrategy,omitempty" json:"notify_strategy,omitempty"`
 }
 
 type Queue struct {

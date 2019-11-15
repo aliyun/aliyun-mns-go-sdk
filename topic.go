@@ -17,7 +17,7 @@ type AliMNSTopic interface {
 	PublishMessage(message MessagePublishRequest) (resp MessageSendResponse, err error)
 
 	Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error)
-	SetSubscriptionAttributes(subscriptionName string, notifyStrategy notifyStrategyType) (err error)
+	SetSubscriptionAttributes(subscriptionName string, notifyStrategy NotifyStrategyType) (err error)
 	GetSubscriptionAttributes(subscriptionName string) (attr SubscriptionAttribute, err error)
 	Unsubscribe(subscriptionName string) (err error)
 	ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (subscriptions Subscriptions, err error)
@@ -87,7 +87,7 @@ func (p *MNSTopic) Subscribe(subscriptionName string, message MessageSubsribeReq
 	return
 }
 
-func (p *MNSTopic) SetSubscriptionAttributes(subscriptionName string, notifyStrategy notifyStrategyType) (err error) {
+func (p *MNSTopic) SetSubscriptionAttributes(subscriptionName string, notifyStrategy NotifyStrategyType) (err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
