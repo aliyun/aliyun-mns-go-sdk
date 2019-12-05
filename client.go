@@ -112,6 +112,8 @@ func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token stri
 
 	// 2. now init http client
 	cli.initFastHttpClient()
+	//change to dial dual stack to support both ipv4 and ipv6
+	cli.client.DialDualStack = true
 
 	return cli
 }
