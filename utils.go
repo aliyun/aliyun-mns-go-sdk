@@ -12,7 +12,7 @@ func send(client MNSClient, decoder MNSDecoder, method Method, headers map[strin
 	if resp, err = client.Send(method, headers, message, resource); err != nil {
 		return
 	}
-
+	defer fasthttp.ReleaseResponse(resp)
 	if resp != nil {
 		statusCode = resp.Header.StatusCode()
 
@@ -28,7 +28,7 @@ func send(client MNSClient, decoder MNSDecoder, method Method, headers map[strin
 			err, e2 = decoder.DecodeError(bodyBytes, resource)
 
 			if e2 != nil {
-				err = ERR_UNMARSHAL_ERROR_RESPONSE_FAILED.New(errors.Params{"err": e2, "resp":string(bodyBytes)})
+				err = ERR_UNMARSHAL_ERROR_RESPONSE_FAILED.New(errors.Params{"err": e2, "resp": string(bodyBytes)})
 				return
 			}
 			return
