@@ -1,3 +1,4 @@
-# ali_mns
-
-  阿里云消息服务MNS GO语言封装（1.0.1）
+# MNS GO SDK
+1.0.1
+  - support setting timeout
+  - add request id to response
