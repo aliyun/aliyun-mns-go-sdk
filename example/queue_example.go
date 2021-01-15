@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 
 	"github.com/gogap/logs"
 	"github.com/aliyun/aliyun-mns-go-sdk"
@@ -45,6 +46,8 @@ func main() {
 	queueManager := ali_mns.NewMNSQueueManager(client)
 
 	err := queueManager.CreateQueue("test", 0, 65536, 345600, 30, 0, 3)
+
+	time.Sleep(time.Duration(2) * time.Second)
 
 	if err != nil && !ali_mns.ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
 		fmt.Println(err)

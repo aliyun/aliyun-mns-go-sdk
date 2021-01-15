@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/gogap/logs"
 	"github.com/aliyun/aliyun-mns-go-sdk"
@@ -76,6 +77,8 @@ func main() {
 	        return
 	    }
 	*/
+
+	time.Sleep(time.Duration(2) * time.Second)
 
 	// 4. now publish message
 	msg := ali_mns.MessagePublishRequest{
