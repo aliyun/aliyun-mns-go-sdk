@@ -54,7 +54,7 @@ func main() {
 	queue := ali_mns.NewMNSQueue("test", client)
 
 	for i := 1; i < 10000; i++ {
-		_, err := queue.SendMessage(msg)
+		ret, err := queue.SendMessage(msg)
 
 		go func() {
 			fmt.Println(queue.QPSMonitor().QPS())
@@ -63,7 +63,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			// logs.Pretty("response:", ret)
+			logs.Pretty("response:", ret)
 		}
 
 		endChan := make(chan int)
@@ -73,12 +73,12 @@ func main() {
 			select {
 			case resp := <-respChan:
 				{
-					// logs.Pretty("response:", resp)
+					logs.Pretty("response:", resp)
 					logs.Debug("change the visibility: ", resp.ReceiptHandle)
 					if ret, e := queue.ChangeMessageVisibility(resp.ReceiptHandle, 5); e != nil {
 						fmt.Println(e)
 					} else {
-						// logs.Pretty("visibility changed", ret)
+						logs.Pretty("visibility changed", ret)
 						logs.Debug("delete it now: ", ret.ReceiptHandle)
 						if e := queue.DeleteMessage(ret.ReceiptHandle); e != nil {
 							fmt.Println(e)
