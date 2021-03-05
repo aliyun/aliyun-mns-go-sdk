@@ -32,7 +32,7 @@ const (
 )
 
 const (
-	ClientName           = "mns-go-sdk/1.0.1(fasthttp)"
+	ClientName           = "mns-go-sdk/1.0.2(fasthttp)"
 	DefaultTimeout int64 = 35
 )
 
