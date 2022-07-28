@@ -205,7 +205,11 @@ func (p *aliMNSClient) Send(method Method, headers map[string]string, message in
 				xmlContent = m
 			}
 		default:
-			if bXml, e := xml.Marshal(message); e != nil {
+			messageSendRequest, ok := message.(MessageSendRequest)
+			if ok && messageSendRequest.Priority == 0 {
+				messageSendRequest.Priority = 8
+			}
+			if bXml, e := xml.Marshal(messageSendRequest); e != nil {
 				err = ERR_MARSHAL_MESSAGE_FAILED.New(errors.Params{"err": e})
 				return nil, err
 			} else {
