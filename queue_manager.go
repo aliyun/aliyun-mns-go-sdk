@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ type AliQueueManager interface {
 }
 
 type MNSQueueManager struct {
-	cli     MNSClient
+	cli     Client
 	decoder MNSDecoder
 }
 
@@ -72,7 +72,7 @@ func checkPollingWaitSeconds(pollingWaitSeconds int32) (err error) {
 	return
 }
 
-func NewMNSQueueManager(client MNSClient) AliQueueManager {
+func NewMNSQueueManager(client Client) AliQueueManager {
 	return &MNSQueueManager{
 		cli:     client,
 		decoder: NewAliMNSDecoder(),

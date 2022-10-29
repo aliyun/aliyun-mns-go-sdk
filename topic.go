@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"fmt"
@@ -26,15 +26,15 @@ type AliMNSTopic interface {
 
 type MNSTopic struct {
 	name    string
-	client  MNSClient
+	client  Client
 	decoder MNSDecoder
 
 	qpsMonitor *QPSMonitor
 }
 
-func NewMNSTopic(name string, client MNSClient, qps ...int32) AliMNSTopic {
+func NewMNSTopic(name string, client Client, qps ...int32) AliMNSTopic {
 	if name == "" {
-		panic("ali_mns: topic name could not be empty")
+		panic("mns: topic name could not be empty")
 	}
 
 	topic := new(MNSTopic)
@@ -55,7 +55,7 @@ func (p *MNSTopic) Name() string {
 }
 
 func (p *MNSTopic) GenerateQueueEndpoint(queueName string) string {
-	return "acs:mns:" + p.client.getRegion() + ":" + p.client.getAccountID() + ":queues/" + queueName
+	return "acs:mns:" + p.client.GetRegion() + ":" + p.client.GetAccountID() + ":queues/" + queueName
 }
 
 func (p *MNSTopic) GenerateMailEndpoint(mailAddress string) string {

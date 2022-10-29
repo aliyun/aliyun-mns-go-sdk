@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"encoding/json"

@@ -1,60 +1,51 @@
-package main
+package mns_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	mns "github.com/aliyun/aliyun-mns-go-sdk"
+	"github.com/gogap/logs"
+	"github.com/stretchr/testify/suite"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
+	"testing"
 	"time"
-
-	"github.com/gogap/logs"
-	"github.com/aliyun/aliyun-mns-go-sdk"
 )
 
-type appConf struct {
-	Url             string `json:"url"`
-	AccessKeyId     string `json:"access_key_id"`
-	AccessKeySecret string `json:"access_key_secret"`
+type queueTestSuite struct {
+	suite.Suite
 }
 
-func main() {
+func TestQueue(t *testing.T) {
+	suite.Run(t, new(queueTestSuite))
+}
+
+func (s *queueTestSuite) TestQueueExample() {
 	go func() {
 		log.Println(http.ListenAndServe("localhost:8080", nil))
 	}()
 
-	conf := appConf{}
-
-	if bFile, e := ioutil.ReadFile("app.conf"); e != nil {
-		panic(e)
-	} else {
-		if e := json.Unmarshal(bFile, &conf); e != nil {
-			panic(e)
-		}
-	}
-
-	client := ali_mns.NewAliMNSClient(conf.Url,
+	conf := newAppConf()
+	client := mns.NewClient(conf.Url,
 		conf.AccessKeyId,
 		conf.AccessKeySecret)
 
-	msg := ali_mns.MessageSendRequest{
+	msg := mns.MessageSendRequest{
 		MessageBody:  "hello <\"aliyun-mns-go-sdk\">",
 		DelaySeconds: 0,
 		Priority:     8}
 
-	queueManager := ali_mns.NewMNSQueueManager(client)
+	queueManager := mns.NewMNSQueueManager(client)
 
 	err := queueManager.CreateQueue("test", 0, 65536, 345600, 30, 0, 3)
 
 	time.Sleep(time.Duration(2) * time.Second)
 
-	if err != nil && !ali_mns.ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
+	if err != nil && !mns.ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
 		fmt.Println(err)
 		return
 	}
 
-	queue := ali_mns.NewMNSQueue("test", client)
+	queue := mns.NewMNSQueue("test", client)
 
 	for i := 1; i < 10000; i++ {
 		ret, err := queue.SendMessage(msg)
@@ -70,7 +61,7 @@ func main() {
 		}
 
 		endChan := make(chan int)
-		respChan := make(chan ali_mns.MessageReceiveResponse)
+		respChan := make(chan mns.MessageReceiveResponse)
 		errChan := make(chan error)
 		go func() {
 			select {

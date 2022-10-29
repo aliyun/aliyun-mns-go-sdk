@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"fmt"
@@ -25,15 +25,15 @@ type AliMNSQueue interface {
 
 type MNSQueue struct {
 	name    string
-	client  MNSClient
+	client  Client
 	decoder MNSDecoder
 
 	qpsMonitor *QPSMonitor
 }
 
-func NewMNSQueue(name string, client MNSClient, qps ...int32) AliMNSQueue {
+func NewMNSQueue(name string, client Client, qps ...int32) AliMNSQueue {
 	if name == "" {
-		panic("ali_mns: queue name could not be empty")
+		panic("mns: queue name could not be empty")
 	}
 
 	queue := new(MNSQueue)
