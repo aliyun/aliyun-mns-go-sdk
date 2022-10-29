@@ -6,25 +6,25 @@ import (
 	"io"
 )
 
-type MNSDecoder interface {
+type Decoder interface {
 	Decode(reader io.Reader, v interface{}) (err error)
 	DecodeError(bodyBytes []byte, resource string) (decodedError error, err error)
 
 	Test() bool
 }
 
-type aliMNSDecoder struct {
+type decoder struct {
 }
 
 type batchOpDecoder struct {
 	v interface{}
 }
 
-func NewAliMNSDecoder() MNSDecoder {
-	return &aliMNSDecoder{}
+func NewDecoder() Decoder {
+	return &decoder{}
 }
 
-func (p *aliMNSDecoder) Test() bool {
+func (p *decoder) Test() bool {
 	return false
 }
 
@@ -32,14 +32,14 @@ func (p *batchOpDecoder) Test() bool {
 	return true
 }
 
-func (p *aliMNSDecoder) Decode(reader io.Reader, v interface{}) (err error) {
+func (p *decoder) Decode(reader io.Reader, v interface{}) (err error) {
 	decoder := xml.NewDecoder(reader)
 	err = decoder.Decode(&v)
 
 	return
 }
 
-func (p *aliMNSDecoder) DecodeError(bodyBytes []byte, resource string) (decodedError error, err error) {
+func (p *decoder) DecodeError(bodyBytes []byte, resource string) (decodedError error, err error) {
 	bodyReader := bytes.NewReader(bodyBytes)
 	errResp := ErrorResponse{}
 
@@ -51,7 +51,7 @@ func (p *aliMNSDecoder) DecodeError(bodyBytes []byte, resource string) (decodedE
 	return
 }
 
-func NewBatchOpDecoder(v interface{}) MNSDecoder {
+func NewBatchOpDecoder(v interface{}) Decoder {
 	return &batchOpDecoder{v: v}
 }
 

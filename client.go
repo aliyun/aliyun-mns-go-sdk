@@ -133,8 +133,8 @@ func NewClientWithConfig(clientConfig ClientConfig) *client {
 	regionSlice := strings.Split(pieces[2], "-internal")
 	cli.region = regionSlice[0]
 
-	if globalurl := os.Getenv(GlobalProxy); globalurl != "" {
-		cli.proxyURL = globalurl
+	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
+		cli.proxyURL = globalUrl
 	}
 
 	// 2. now init http client

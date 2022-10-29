@@ -9,7 +9,7 @@ import (
 	"github.com/gogap/errors"
 )
 
-type AliQueueManager interface {
+type QueueManager interface {
 	CreateSimpleQueue(queueName string) (err error)
 	CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
 	SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
@@ -19,9 +19,9 @@ type AliQueueManager interface {
 	ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error)
 }
 
-type MNSQueueManager struct {
+type queueManager struct {
 	cli     Client
-	decoder MNSDecoder
+	decoder Decoder
 }
 
 func checkQueueName(queueName string) (err error) {
@@ -72,10 +72,10 @@ func checkPollingWaitSeconds(pollingWaitSeconds int32) (err error) {
 	return
 }
 
-func NewMNSQueueManager(client Client) AliQueueManager {
-	return &MNSQueueManager{
+func NewQueueManager(client Client) QueueManager {
+	return &queueManager{
 		cli:     client,
-		decoder: NewAliMNSDecoder(),
+		decoder: NewDecoder(),
 	}
 }
 
@@ -98,11 +98,11 @@ func checkAttributes(delaySeconds int32, maxMessageSize int32, messageRetentionP
 	return
 }
 
-func (p *MNSQueueManager) CreateSimpleQueue(queueName string) (err error) {
+func (p *queueManager) CreateSimpleQueue(queueName string) (err error) {
 	return p.CreateQueue(queueName, 0, 65536, 345600, 30, 0, 2)
 }
 
-func (p *MNSQueueManager) CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
+func (p *queueManager) CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -136,7 +136,7 @@ func (p *MNSQueueManager) CreateQueue(queueName string, delaySeconds int32, maxM
 	return
 }
 
-func (p *MNSQueueManager) SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
+func (p *queueManager) SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -163,7 +163,7 @@ func (p *MNSQueueManager) SetQueueAttributes(queueName string, delaySeconds int3
 	return
 }
 
-func (p *MNSQueueManager) GetQueueAttributes(queueName string) (attr QueueAttribute, err error) {
+func (p *queueManager) GetQueueAttributes(queueName string) (attr QueueAttribute, err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -175,7 +175,7 @@ func (p *MNSQueueManager) GetQueueAttributes(queueName string) (attr QueueAttrib
 	return
 }
 
-func (p *MNSQueueManager) DeleteQueue(queueName string) (err error) {
+func (p *queueManager) DeleteQueue(queueName string) (err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -187,7 +187,7 @@ func (p *MNSQueueManager) DeleteQueue(queueName string) (err error) {
 	return
 }
 
-func (p *MNSQueueManager) ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error) {
+func (p *queueManager) ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error) {
 
 	header := map[string]string{}
 
@@ -217,7 +217,7 @@ func (p *MNSQueueManager) ListQueue(nextMarker string, retNumber int32, prefix s
 	return
 }
 
-func (p *MNSQueueManager) ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error) {
+func (p *queueManager) ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error) {
 
 	header := map[string]string{}
 

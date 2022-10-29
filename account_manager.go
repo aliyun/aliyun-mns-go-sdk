@@ -4,7 +4,7 @@ import "encoding/xml"
 
 type AccountManager struct {
 	cli     Client
-	decoder MNSDecoder
+	decoder Decoder
 }
 
 type OpenService struct {
@@ -16,7 +16,7 @@ type OpenService struct {
 func NewAccountManager(client Client) *AccountManager {
 	return &AccountManager{
 		cli:     client,
-		decoder: NewAliMNSDecoder(),
+		decoder: NewDecoder(),
 	}
 }
 

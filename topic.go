@@ -9,7 +9,7 @@ import (
 	"github.com/gogap/errors"
 )
 
-type AliMNSTopic interface {
+type TopicClient interface {
 	Name() string
 	GenerateQueueEndpoint(queueName string) string
 	GenerateMailEndpoint(mailAddress string) string
@@ -24,23 +24,23 @@ type AliMNSTopic interface {
 	ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (subscriptionDetails SubscriptionDetails, err error)
 }
 
-type MNSTopic struct {
+type topicClient struct {
 	name    string
 	client  Client
-	decoder MNSDecoder
+	decoder Decoder
 
 	qpsMonitor *QPSMonitor
 }
 
-func NewMNSTopic(name string, client Client, qps ...int32) AliMNSTopic {
+func NewTopic(name string, client Client, qps ...int32) TopicClient {
 	if name == "" {
 		panic("mns: topic name could not be empty")
 	}
 
-	topic := new(MNSTopic)
+	topic := new(topicClient)
 	topic.client = client
 	topic.name = name
-	topic.decoder = NewAliMNSDecoder()
+	topic.decoder = NewDecoder()
 
 	qpsLimit := DefaultTopicQPSLimit
 	if qps != nil && len(qps) == 1 && qps[0] > 0 {
@@ -50,25 +50,25 @@ func NewMNSTopic(name string, client Client, qps ...int32) AliMNSTopic {
 	return topic
 }
 
-func (p *MNSTopic) Name() string {
+func (p *topicClient) Name() string {
 	return p.name
 }
 
-func (p *MNSTopic) GenerateQueueEndpoint(queueName string) string {
+func (p *topicClient) GenerateQueueEndpoint(queueName string) string {
 	return "acs:mns:" + p.client.GetRegion() + ":" + p.client.GetAccountID() + ":queues/" + queueName
 }
 
-func (p *MNSTopic) GenerateMailEndpoint(mailAddress string) string {
+func (p *topicClient) GenerateMailEndpoint(mailAddress string) string {
 	return "mail:directmail:" + mailAddress
 }
 
-func (p *MNSTopic) PublishMessage(message MessagePublishRequest) (resp MessageSendResponse, err error) {
+func (p *topicClient) PublishMessage(message MessagePublishRequest) (resp MessageSendResponse, err error) {
 	p.qpsMonitor.checkQPS()
 	_, err = send(p.client, p.decoder, POST, nil, message, fmt.Sprintf("topics/%s/%s", p.name, "messages"), &resp)
 	return
 }
 
-func (p *MNSTopic) Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error) {
+func (p *topicClient) Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
@@ -87,7 +87,7 @@ func (p *MNSTopic) Subscribe(subscriptionName string, message MessageSubsribeReq
 	return
 }
 
-func (p *MNSTopic) SetSubscriptionAttributes(subscriptionName string, notifyStrategy NotifyStrategyType) (err error) {
+func (p *topicClient) SetSubscriptionAttributes(subscriptionName string, notifyStrategy NotifyStrategyType) (err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
@@ -103,7 +103,7 @@ func (p *MNSTopic) SetSubscriptionAttributes(subscriptionName string, notifyStra
 	return
 }
 
-func (p *MNSTopic) GetSubscriptionAttributes(subscriptionName string) (attr SubscriptionAttribute, err error) {
+func (p *topicClient) GetSubscriptionAttributes(subscriptionName string) (attr SubscriptionAttribute, err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
@@ -115,7 +115,7 @@ func (p *MNSTopic) GetSubscriptionAttributes(subscriptionName string) (attr Subs
 	return
 }
 
-func (p *MNSTopic) Unsubscribe(subscriptionName string) (err error) {
+func (p *topicClient) Unsubscribe(subscriptionName string) (err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
@@ -127,7 +127,7 @@ func (p *MNSTopic) Unsubscribe(subscriptionName string) (err error) {
 	return
 }
 
-func (p *MNSTopic) ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (subscriptions Subscriptions, err error) {
+func (p *topicClient) ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (subscriptions Subscriptions, err error) {
 	header := map[string]string{}
 
 	marker := strings.TrimSpace(nextMarker)
@@ -156,7 +156,7 @@ func (p *MNSTopic) ListSubscriptionByTopic(nextMarker string, retNumber int32, p
 	return
 }
 
-func (p *MNSTopic) ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (subscriptionDetails SubscriptionDetails, err error) {
+func (p *topicClient) ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (subscriptionDetails SubscriptionDetails, err error) {
 	header := map[string]string{}
 
 	marker := strings.TrimSpace(nextMarker)

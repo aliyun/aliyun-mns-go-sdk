@@ -9,7 +9,7 @@ var (
 	DefaultNumOfMessages int32 = 16
 )
 
-type AliMNSQueue interface {
+type QueueClient interface {
 	QPSMonitor() *QPSMonitor
 	Name() string
 	SendMessage(message MessageSendRequest) (resp MessageSendResponse, err error)
@@ -23,23 +23,23 @@ type AliMNSQueue interface {
 	ChangeMessageVisibility(receiptHandle string, visibilityTimeout int64) (resp MessageVisibilityChangeResponse, err error)
 }
 
-type MNSQueue struct {
+type queueClient struct {
 	name    string
 	client  Client
-	decoder MNSDecoder
+	decoder Decoder
 
 	qpsMonitor *QPSMonitor
 }
 
-func NewMNSQueue(name string, client Client, qps ...int32) AliMNSQueue {
+func NewQueue(name string, client Client, qps ...int32) QueueClient {
 	if name == "" {
 		panic("mns: queue name could not be empty")
 	}
 
-	queue := new(MNSQueue)
+	queue := new(queueClient)
 	queue.client = client
 	queue.name = name
-	queue.decoder = NewAliMNSDecoder()
+	queue.decoder = NewDecoder()
 
 	qpsLimit := DefaultQueueQPSLimit
 	if qps != nil && len(qps) == 1 && qps[0] > 0 {
@@ -49,21 +49,21 @@ func NewMNSQueue(name string, client Client, qps ...int32) AliMNSQueue {
 	return queue
 }
 
-func (p *MNSQueue) QPSMonitor() *QPSMonitor {
+func (p *queueClient) QPSMonitor() *QPSMonitor {
 	return p.qpsMonitor
 }
 
-func (p *MNSQueue) Name() string {
+func (p *queueClient) Name() string {
 	return p.name
 }
 
-func (p *MNSQueue) SendMessage(message MessageSendRequest) (resp MessageSendResponse, err error) {
+func (p *queueClient) SendMessage(message MessageSendRequest) (resp MessageSendResponse, err error) {
 	p.qpsMonitor.checkQPS()
 	_, err = send(p.client, p.decoder, POST, nil, message, fmt.Sprintf("queues/%s/%s", p.name, "messages"), &resp)
 	return
 }
 
-func (p *MNSQueue) BatchSendMessage(messages ...MessageSendRequest) (resp BatchMessageSendResponse, err error) {
+func (p *queueClient) BatchSendMessage(messages ...MessageSendRequest) (resp BatchMessageSendResponse, err error) {
 	if messages == nil || len(messages) == 0 {
 		return
 	}
@@ -78,7 +78,7 @@ func (p *MNSQueue) BatchSendMessage(messages ...MessageSendRequest) (resp BatchM
 	return
 }
 
-func (p *MNSQueue) ReceiveMessage(respChan chan MessageReceiveResponse, errChan chan error, waitseconds ...int64) {
+func (p *queueClient) ReceiveMessage(respChan chan MessageReceiveResponse, errChan chan error, waitseconds ...int64) {
 	resource := fmt.Sprintf("queues/%s/%s", p.name, "messages")
 	if waitseconds != nil {
 		for _, waitsecond := range waitseconds {
@@ -112,7 +112,7 @@ func (p *MNSQueue) ReceiveMessage(respChan chan MessageReceiveResponse, errChan 
 	return
 }
 
-func (p *MNSQueue) BatchReceiveMessage(respChan chan BatchMessageReceiveResponse, errChan chan error, numOfMessages int32, waitseconds ...int64) {
+func (p *queueClient) BatchReceiveMessage(respChan chan BatchMessageReceiveResponse, errChan chan error, numOfMessages int32, waitseconds ...int64) {
 	if numOfMessages <= 0 {
 		numOfMessages = DefaultNumOfMessages
 	}
@@ -147,7 +147,7 @@ func (p *MNSQueue) BatchReceiveMessage(respChan chan BatchMessageReceiveResponse
 	return
 }
 
-func (p *MNSQueue) PeekMessage(respChan chan MessageReceiveResponse, errChan chan error) {
+func (p *queueClient) PeekMessage(respChan chan MessageReceiveResponse, errChan chan error) {
 	p.qpsMonitor.checkQPS()
 	resp := MessageReceiveResponse{}
 	_, err := send(p.client, p.decoder, GET, nil, nil, fmt.Sprintf("queues/%s/%s?peekonly=true", p.name, "messages"), &resp)
@@ -159,7 +159,7 @@ func (p *MNSQueue) PeekMessage(respChan chan MessageReceiveResponse, errChan cha
 	return
 }
 
-func (p *MNSQueue) BatchPeekMessage(respChan chan BatchMessageReceiveResponse, errChan chan error, numOfMessages int32) {
+func (p *queueClient) BatchPeekMessage(respChan chan BatchMessageReceiveResponse, errChan chan error, numOfMessages int32) {
 	if numOfMessages <= 0 {
 		numOfMessages = DefaultNumOfMessages
 	}
@@ -175,13 +175,13 @@ func (p *MNSQueue) BatchPeekMessage(respChan chan BatchMessageReceiveResponse, e
 	return
 }
 
-func (p *MNSQueue) DeleteMessage(receiptHandle string) (err error) {
+func (p *queueClient) DeleteMessage(receiptHandle string) (err error) {
 	p.qpsMonitor.checkQPS()
 	_, err = send(p.client, p.decoder, DELETE, nil, nil, fmt.Sprintf("queues/%s/%s?ReceiptHandle=%s", p.name, "messages", url.QueryEscape(receiptHandle)), nil)
 	return
 }
 
-func (p *MNSQueue) BatchDeleteMessage(receiptHandles ...string) (resp BatchMessageDeleteErrorResponse, err error) {
+func (p *queueClient) BatchDeleteMessage(receiptHandles ...string) (resp BatchMessageDeleteErrorResponse, err error) {
 	if receiptHandles == nil || len(receiptHandles) == 0 {
 		return
 	}
@@ -198,7 +198,7 @@ func (p *MNSQueue) BatchDeleteMessage(receiptHandles ...string) (resp BatchMessa
 	return
 }
 
-func (p *MNSQueue) ChangeMessageVisibility(receiptHandle string, visibilityTimeout int64) (resp MessageVisibilityChangeResponse, err error) {
+func (p *queueClient) ChangeMessageVisibility(receiptHandle string, visibilityTimeout int64) (resp MessageVisibilityChangeResponse, err error) {
 	p.qpsMonitor.checkQPS()
 	_, err = send(p.client, p.decoder, PUT, nil, nil, fmt.Sprintf("queues/%s/%s?ReceiptHandle=%s&VisibilityTimeout=%d", p.name, "messages", url.QueryEscape(receiptHandle), visibilityTimeout), &resp)
 	return

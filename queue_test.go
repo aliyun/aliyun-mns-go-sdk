@@ -34,7 +34,7 @@ func (s *queueTestSuite) TestQueueExample() {
 		DelaySeconds: 0,
 		Priority:     8}
 
-	queueManager := mns.NewMNSQueueManager(client)
+	queueManager := mns.NewQueueManager(client)
 
 	err := queueManager.CreateQueue("test", 0, 65536, 345600, 30, 0, 3)
 
@@ -45,7 +45,7 @@ func (s *queueTestSuite) TestQueueExample() {
 		return
 	}
 
-	queue := mns.NewMNSQueue("test", client)
+	queue := mns.NewQueue("test", client)
 
 	for i := 1; i < 10000; i++ {
 		ret, err := queue.SendMessage(msg)

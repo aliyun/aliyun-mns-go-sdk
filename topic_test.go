@@ -24,7 +24,7 @@ func (s *topicTestSuite) TestTopicExample() {
 		conf.AccessKeySecret)
 
 	// 1. create a queue for receiving pushed messages
-	queueManager := mns.NewMNSQueueManager(client)
+	queueManager := mns.NewQueueManager(client)
 	err := queueManager.CreateSimpleQueue("testQueue")
 	if err != nil && !mns.ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
 		fmt.Println(err)
@@ -32,7 +32,7 @@ func (s *topicTestSuite) TestTopicExample() {
 	}
 
 	// 2. create the topic
-	topicManager := mns.NewMNSTopicManager(client)
+	topicManager := mns.NewTopicManager(client)
 	// topicManager.DeleteTopic("testTopic")
 	err = topicManager.CreateSimpleTopic("testTopic")
 	if err != nil && !mns.ERR_MNS_TOPIC_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
@@ -41,7 +41,7 @@ func (s *topicTestSuite) TestTopicExample() {
 	}
 
 	// 3. subscribe to topic, the endpoint is set to be a queue in this sample
-	topic := mns.NewMNSTopic("testTopic", client)
+	topic := mns.NewTopic("testTopic", client)
 	sub := mns.MessageSubsribeRequest{
 		Endpoint:            topic.GenerateQueueEndpoint("testQueue"),
 		NotifyContentFormat: mns.SIMPLIFIED,
@@ -89,7 +89,7 @@ func (s *topicTestSuite) TestTopicExample() {
 	}
 
 	// 5. receive the message from queue
-	queue := mns.NewMNSQueue("testQueue", client)
+	queue := mns.NewQueue("testQueue", client)
 
 	endChan := make(chan int)
 	respChan := make(chan mns.MessageReceiveResponse)

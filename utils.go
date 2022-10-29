@@ -8,7 +8,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func send(client Client, decoder MNSDecoder, method Method, headers map[string]string, message interface{}, resource string, v interface{}) (statusCode int, err error) {
+func send(client Client, decoder Decoder, method Method, headers map[string]string, message interface{}, resource string, v interface{}) (statusCode int, err error) {
 	var resp *fasthttp.Response
 	if resp, err = client.Send(method, headers, message, resource); err != nil {
 		return
