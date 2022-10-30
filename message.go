@@ -194,7 +194,7 @@ type MessageReceiveResponse struct {
 type BatchMessageReceiveResponse struct {
 	BaseResponse
 	XMLName  xml.Name                 `xml:"Messages" json:"-"`
-	Messages []MessageReceiveResponse `xml:"Message" json:"messages"`
+	Messages []*MessageReceiveResponse `xml:"Message" json:"messages"`
 }
 
 type MessageVisibilityChangeResponse struct {
