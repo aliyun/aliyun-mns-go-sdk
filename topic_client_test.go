@@ -41,8 +41,8 @@ func (s *topicTestSuite) TestTopicExample() {
 	}
 
 	// 3. subscribe to topic, the endpoint is set to be a queue in this sample
-	topic := mns.NewTopic("testTopic", client)
-	sub := mns.MessageSubsribeRequest{
+	topic := mns.NewTopicClient("testTopic", client)
+	sub := &mns.MessageSubsribeRequest{
 		Endpoint:            topic.GenerateQueueEndpoint("testQueue"),
 		NotifyContentFormat: mns.SIMPLIFIED,
 	}
@@ -73,7 +73,7 @@ func (s *topicTestSuite) TestTopicExample() {
 	time.Sleep(time.Duration(2) * time.Second)
 
 	// 4. now publish message
-	msg := mns.MessagePublishRequest{
+	msg := &mns.MessagePublishRequest{
 		MessageBody: "hello topic <\"aliyun-mns-go-sdk\">",
 		MessageAttributes: &mns.MessageAttributes{
 			MailAttributes: &mns.MailAttributes{
@@ -89,10 +89,10 @@ func (s *topicTestSuite) TestTopicExample() {
 	}
 
 	// 5. receive the message from queue
-	queue := mns.NewQueue("testQueue", client)
+	queue := mns.NewQueueClient("testQueue", client)
 
 	endChan := make(chan int)
-	respChan := make(chan mns.MessageReceiveResponse)
+	respChan := make(chan *mns.MessageReceiveResponse)
 	errChan := make(chan error)
 	go func() {
 		select {

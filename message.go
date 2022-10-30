@@ -112,8 +112,8 @@ func (m *MailAttributes) MarshalJSON() ([]byte, error) {
 }
 
 type BatchMessageSendRequest struct {
-	XMLName  xml.Name             `xml:"Messages"`
-	Messages []MessageSendRequest `xml:"Message"`
+	XMLName  xml.Name              `xml:"Messages"`
+	Messages []*MessageSendRequest `xml:"Message"`
 }
 
 type ReceiptHandles struct {

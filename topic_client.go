@@ -13,15 +13,13 @@ type TopicClient interface {
 	Name() string
 	GenerateQueueEndpoint(queueName string) string
 	GenerateMailEndpoint(mailAddress string) string
-
-	PublishMessage(message MessagePublishRequest) (resp MessageSendResponse, err error)
-
-	Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error)
+	PublishMessage(message *MessagePublishRequest) (*MessageSendResponse, error)
+	Subscribe(subscriptionName string, message *MessageSubsribeRequest) (err error)
 	SetSubscriptionAttributes(subscriptionName string, notifyStrategy NotifyStrategyType) (err error)
-	GetSubscriptionAttributes(subscriptionName string) (attr SubscriptionAttribute, err error)
+	GetSubscriptionAttributes(subscriptionName string) (*SubscriptionAttribute, error)
 	Unsubscribe(subscriptionName string) (err error)
-	ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (subscriptions Subscriptions, err error)
-	ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (subscriptionDetails SubscriptionDetails, err error)
+	ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (*Subscriptions, error)
+	ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (*SubscriptionDetails, error)
 }
 
 type topicClient struct {
@@ -32,7 +30,9 @@ type topicClient struct {
 	qpsMonitor *QPSMonitor
 }
 
-func NewTopic(name string, client Client, qps ...int32) TopicClient {
+var _ TopicClient = (*topicClient)(nil)
+
+func NewTopicClient(name string, client Client, qps ...int32) *topicClient {
 	if name == "" {
 		panic("mns: topic name could not be empty")
 	}
@@ -62,13 +62,14 @@ func (p *topicClient) GenerateMailEndpoint(mailAddress string) string {
 	return "mail:directmail:" + mailAddress
 }
 
-func (p *topicClient) PublishMessage(message MessagePublishRequest) (resp MessageSendResponse, err error) {
+func (p *topicClient) PublishMessage(message *MessagePublishRequest) (*MessageSendResponse, error) {
 	p.qpsMonitor.checkQPS()
-	_, err = send(p.client, p.decoder, POST, nil, message, fmt.Sprintf("topics/%s/%s", p.name, "messages"), &resp)
-	return
+	resp := &MessageSendResponse{}
+	_, err := send(p.client, p.decoder, POST, nil, message, fmt.Sprintf("topics/%s/%s", p.name, "messages"), resp)
+	return resp, err
 }
 
-func (p *topicClient) Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error) {
+func (p *topicClient) Subscribe(subscriptionName string, message *MessageSubsribeRequest) (err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
@@ -103,16 +104,16 @@ func (p *topicClient) SetSubscriptionAttributes(subscriptionName string, notifyS
 	return
 }
 
-func (p *topicClient) GetSubscriptionAttributes(subscriptionName string) (attr SubscriptionAttribute, err error) {
+func (p *topicClient) GetSubscriptionAttributes(subscriptionName string) (*SubscriptionAttribute, error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
-	if err = checkTopicName(subscriptionName); err != nil {
-		return
+	if err := checkTopicName(subscriptionName); err != nil {
+		return nil, err
 	}
 
-	_, err = send(p.client, p.decoder, GET, nil, nil, fmt.Sprintf("topics/%s/subscriptions/%s", p.name, subscriptionName), &attr)
-
-	return
+	attr := &SubscriptionAttribute{}
+	_, err := send(p.client, p.decoder, GET, nil, nil, fmt.Sprintf("topics/%s/subscriptions/%s", p.name, subscriptionName), attr)
+	return attr, err
 }
 
 func (p *topicClient) Unsubscribe(subscriptionName string) (err error) {
@@ -127,7 +128,7 @@ func (p *topicClient) Unsubscribe(subscriptionName string) (err error) {
 	return
 }
 
-func (p *topicClient) ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (subscriptions Subscriptions, err error) {
+func (p *topicClient) ListSubscriptionByTopic(nextMarker string, retNumber int32, prefix string) (*Subscriptions, error) {
 	header := map[string]string{}
 
 	marker := strings.TrimSpace(nextMarker)
@@ -141,8 +142,7 @@ func (p *topicClient) ListSubscriptionByTopic(nextMarker string, retNumber int32
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -151,12 +151,12 @@ func (p *topicClient) ListSubscriptionByTopic(nextMarker string, retNumber int32
 		header["x-mns-prefix"] = prefix
 	}
 
-	_, err = send(p.client, p.decoder, GET, header, nil, fmt.Sprintf("topics/%s/subscriptions", p.name), &subscriptions)
-
-	return
+	subscriptions := &Subscriptions{}
+	_, err := send(p.client, p.decoder, GET, header, nil, fmt.Sprintf("topics/%s/subscriptions", p.name), subscriptions)
+	return subscriptions, err
 }
 
-func (p *topicClient) ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (subscriptionDetails SubscriptionDetails, err error) {
+func (p *topicClient) ListSubscriptionDetailByTopic(nextMarker string, retNumber int32, prefix string) (*SubscriptionDetails, error) {
 	header := map[string]string{}
 
 	marker := strings.TrimSpace(nextMarker)
@@ -170,8 +170,7 @@ func (p *topicClient) ListSubscriptionDetailByTopic(nextMarker string, retNumber
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -182,7 +181,7 @@ func (p *topicClient) ListSubscriptionDetailByTopic(nextMarker string, retNumber
 
 	header["x-mns-with-meta"] = "true"
 
-	_, err = send(p.client, p.decoder, GET, header, nil, fmt.Sprintf("topics/%s/subscriptions", p.name), &subscriptionDetails)
-
-	return
+	subscriptionDetails := &SubscriptionDetails{}
+	_, err := send(p.client, p.decoder, GET, header, nil, fmt.Sprintf("topics/%s/subscriptions", p.name), subscriptionDetails)
+	return subscriptionDetails, err
 }

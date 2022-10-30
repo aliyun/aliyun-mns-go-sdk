@@ -11,7 +11,7 @@ type openServiceTestSuite struct {
 	suite.Suite
 }
 
-func TestOepnService(t *testing.T) {
+func TestOpenService(t *testing.T) {
 	suite.Run(t, new(openServiceTestSuite))
 }
 

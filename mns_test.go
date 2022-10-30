@@ -8,8 +8,8 @@ type appConf struct {
 
 func newAppConf() *appConf {
 	return &appConf{
-		Url:             "",
-		AccessKeyId:     "",
-		AccessKeySecret: "",
+		Url:             "http://5623837437236586.mns.ap-southeast-1.aliyuncs.com",
+		AccessKeyId:     "LTAI5t9bff26m8fi71StWN7e",
+		AccessKeySecret: "LNcI1L9ZwrEr0g4kvaOBWKmN4Hie8M",
 	}
 }

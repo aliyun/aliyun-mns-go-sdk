@@ -13,16 +13,18 @@ type TopicManager interface {
 	CreateSimpleTopic(topicName string) (err error)
 	CreateTopic(topicName string, maxMessageSize int32, loggingEnabled bool) (err error)
 	SetTopicAttributes(topicName string, maxMessageSize int32, loggingEnabled bool) (err error)
-	GetTopicAttributes(topicName string) (attr TopicAttribute, err error)
+	GetTopicAttributes(topicName string) (*TopicAttribute, error)
 	DeleteTopic(topicName string) (err error)
-	ListTopic(nextMarker string, retNumber int32, prefix string) (topics Topics, err error)
-	ListTopicDetail(nextMarker string, retNumber int32, prefix string) (topicDetails TopicDetails, err error)
+	ListTopic(nextMarker string, retNumber int32, prefix string) (*Topics, error)
+	ListTopicDetail(nextMarker string, retNumber int32, prefix string) (*TopicDetails, error)
 }
 
 type topicManager struct {
 	cli     Client
 	decoder Decoder
 }
+
+var _ TopicManager = (*topicManager)(nil)
 
 func checkTopicName(topicName string) (err error) {
 	if len(topicName) > 256 {
@@ -32,7 +34,7 @@ func checkTopicName(topicName string) (err error) {
 	return
 }
 
-func NewTopicManager(client Client) TopicManager {
+func NewTopicManager(client Client) *topicManager {
 	return &topicManager{
 		cli:     client,
 		decoder: NewDecoder(),
@@ -90,16 +92,16 @@ func (p *topicManager) SetTopicAttributes(topicName string, maxMessageSize int32
 	return
 }
 
-func (p *topicManager) GetTopicAttributes(topicName string) (attr TopicAttribute, err error) {
+func (p *topicManager) GetTopicAttributes(topicName string) (*TopicAttribute, error) {
 	topicName = strings.TrimSpace(topicName)
 
-	if err = checkTopicName(topicName); err != nil {
-		return
+	if err := checkTopicName(topicName); err != nil {
+		return nil, err
 	}
 
-	_, err = send(p.cli, p.decoder, GET, nil, nil, "topics/"+topicName, &attr)
-
-	return
+	attr := &TopicAttribute{}
+	_, err := send(p.cli, p.decoder, GET, nil, nil, "topics/"+topicName, attr)
+	return attr, err
 }
 
 func (p *topicManager) DeleteTopic(topicName string) (err error) {
@@ -114,7 +116,7 @@ func (p *topicManager) DeleteTopic(topicName string) (err error) {
 	return
 }
 
-func (p *topicManager) ListTopic(nextMarker string, retNumber int32, prefix string) (topics Topics, err error) {
+func (p *topicManager) ListTopic(nextMarker string, retNumber int32, prefix string) (*Topics, error) {
 
 	header := map[string]string{}
 
@@ -129,8 +131,7 @@ func (p *topicManager) ListTopic(nextMarker string, retNumber int32, prefix stri
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -139,12 +140,12 @@ func (p *topicManager) ListTopic(nextMarker string, retNumber int32, prefix stri
 		header["x-mns-prefix"] = prefix
 	}
 
-	_, err = send(p.cli, p.decoder, GET, header, nil, "topics", &topics)
-
-	return
+	topics := &Topics{}
+	_, err := send(p.cli, p.decoder, GET, header, nil, "topics", topics)
+	return topics, err
 }
 
-func (p *topicManager) ListTopicDetail(nextMarker string, retNumber int32, prefix string) (topicDetails TopicDetails, err error) {
+func (p *topicManager) ListTopicDetail(nextMarker string, retNumber int32, prefix string) (*TopicDetails, error) {
 
 	header := map[string]string{}
 
@@ -159,8 +160,7 @@ func (p *topicManager) ListTopicDetail(nextMarker string, retNumber int32, prefi
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -171,7 +171,7 @@ func (p *topicManager) ListTopicDetail(nextMarker string, retNumber int32, prefi
 
 	header["x-mns-with-meta"] = "true"
 
-	_, err = send(p.cli, p.decoder, GET, header, nil, "topics", &topicDetails)
-
-	return
+	topicDetails := &TopicDetails{}
+	_, err := send(p.cli, p.decoder, GET, header, nil, "topics", topicDetails)
+	return topicDetails, err
 }

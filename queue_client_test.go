@@ -29,13 +29,12 @@ func (s *queueTestSuite) TestQueueExample() {
 		conf.AccessKeyId,
 		conf.AccessKeySecret)
 
-	msg := mns.MessageSendRequest{
+	msg := &mns.MessageSendRequest{
 		MessageBody:  "hello <\"aliyun-mns-go-sdk\">",
 		DelaySeconds: 0,
 		Priority:     8}
 
 	queueManager := mns.NewQueueManager(client)
-
 	err := queueManager.CreateQueue("test", 0, 65536, 345600, 30, 0, 3)
 
 	time.Sleep(time.Duration(2) * time.Second)
@@ -45,7 +44,7 @@ func (s *queueTestSuite) TestQueueExample() {
 		return
 	}
 
-	queue := mns.NewQueue("test", client)
+	queue := mns.NewQueueClient("test", client)
 
 	for i := 1; i < 10000; i++ {
 		ret, err := queue.SendMessage(msg)
@@ -61,7 +60,7 @@ func (s *queueTestSuite) TestQueueExample() {
 		}
 
 		endChan := make(chan int)
-		respChan := make(chan mns.MessageReceiveResponse)
+		respChan := make(chan *mns.MessageReceiveResponse)
 		errChan := make(chan error)
 		go func() {
 			select {

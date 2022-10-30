@@ -10,19 +10,21 @@ import (
 )
 
 type QueueManager interface {
-	CreateSimpleQueue(queueName string) (err error)
-	CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
-	SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
-	GetQueueAttributes(queueName string) (attr QueueAttribute, err error)
-	DeleteQueue(queueName string) (err error)
-	ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error)
-	ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error)
+	CreateSimpleQueue(queueName string) error
+	CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) error
+	SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) error
+	GetQueueAttributes(queueName string) (*QueueAttribute, error)
+	DeleteQueue(queueName string) error
+	ListQueue(nextMarker string, retNumber int32, prefix string) (*Queues, error)
+	ListQueueDetail(nextMarker string, retNumber int32, prefix string) (*QueueDetails, error)
 }
 
 type queueManager struct {
 	cli     Client
 	decoder Decoder
 }
+
+var _ QueueManager = (*queueManager)(nil)
 
 func checkQueueName(queueName string) (err error) {
 	if len(queueName) > 256 {
@@ -72,7 +74,7 @@ func checkPollingWaitSeconds(pollingWaitSeconds int32) (err error) {
 	return
 }
 
-func NewQueueManager(client Client) QueueManager {
+func NewQueueManager(client Client) *queueManager {
 	return &queueManager{
 		cli:     client,
 		decoder: NewDecoder(),
@@ -163,16 +165,16 @@ func (p *queueManager) SetQueueAttributes(queueName string, delaySeconds int32, 
 	return
 }
 
-func (p *queueManager) GetQueueAttributes(queueName string) (attr QueueAttribute, err error) {
+func (p *queueManager) GetQueueAttributes(queueName string) (*QueueAttribute, error) {
 	queueName = strings.TrimSpace(queueName)
 
-	if err = checkQueueName(queueName); err != nil {
-		return
+	if err := checkQueueName(queueName); err != nil {
+		return nil, err
 	}
 
-	_, err = send(p.cli, p.decoder, GET, nil, nil, "queues/"+queueName, &attr)
-
-	return
+	attr := &QueueAttribute{}
+	_, err := send(p.cli, p.decoder, GET, nil, nil, "queues/"+queueName, attr)
+	return attr, err
 }
 
 func (p *queueManager) DeleteQueue(queueName string) (err error) {
@@ -187,9 +189,9 @@ func (p *queueManager) DeleteQueue(queueName string) (err error) {
 	return
 }
 
-func (p *queueManager) ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error) {
-
+func (p *queueManager) ListQueue(nextMarker string, retNumber int32, prefix string) (*Queues, error) {
 	header := map[string]string{}
+	queues := &Queues{}
 
 	marker := strings.TrimSpace(nextMarker)
 	if len(marker) > 0 {
@@ -202,8 +204,7 @@ func (p *queueManager) ListQueue(nextMarker string, retNumber int32, prefix stri
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -212,13 +213,11 @@ func (p *queueManager) ListQueue(nextMarker string, retNumber int32, prefix stri
 		header["x-mns-prefix"] = prefix
 	}
 
-	_, err = send(p.cli, p.decoder, GET, header, nil, "queues", &queues)
-
-	return
+	_, err := send(p.cli, p.decoder, GET, header, nil, "queues", queues)
+	return queues, err
 }
 
-func (p *queueManager) ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error) {
-
+func (p *queueManager) ListQueueDetail(nextMarker string, retNumber int32, prefix string) (*QueueDetails, error) {
 	header := map[string]string{}
 
 	marker := strings.TrimSpace(nextMarker)
@@ -232,8 +231,7 @@ func (p *queueManager) ListQueueDetail(nextMarker string, retNumber int32, prefi
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -244,7 +242,7 @@ func (p *queueManager) ListQueueDetail(nextMarker string, retNumber int32, prefi
 
 	header["x-mns-with-meta"] = "true"
 
-	_, err = send(p.cli, p.decoder, GET, header, nil, "queues", &queueDetails)
-
-	return
+	queueDetails := &QueueDetails{}
+	_, err := send(p.cli, p.decoder, GET, header, nil, "queues", queueDetails)
+	return queueDetails, err
 }
