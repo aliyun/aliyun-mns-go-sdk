@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"encoding/json"
@@ -112,8 +112,8 @@ func (m *MailAttributes) MarshalJSON() ([]byte, error) {
 }
 
 type BatchMessageSendRequest struct {
-	XMLName  xml.Name             `xml:"Messages"`
-	Messages []MessageSendRequest `xml:"Message"`
+	XMLName  xml.Name              `xml:"Messages"`
+	Messages []*MessageSendRequest `xml:"Message"`
 }
 
 type ReceiptHandles struct {
@@ -194,7 +194,7 @@ type MessageReceiveResponse struct {
 type BatchMessageReceiveResponse struct {
 	BaseResponse
 	XMLName  xml.Name                 `xml:"Messages" json:"-"`
-	Messages []MessageReceiveResponse `xml:"Message" json:"messages"`
+	Messages []*MessageReceiveResponse `xml:"Message" json:"messages"`
 }
 
 type MessageVisibilityChangeResponse struct {

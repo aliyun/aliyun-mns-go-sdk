@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"fmt"
@@ -9,20 +9,22 @@ import (
 	"github.com/gogap/errors"
 )
 
-type AliQueueManager interface {
-	CreateSimpleQueue(queueName string) (err error)
-	CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
-	SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
-	GetQueueAttributes(queueName string) (attr QueueAttribute, err error)
-	DeleteQueue(queueName string) (err error)
-	ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error)
-	ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error)
+type QueueManager interface {
+	CreateSimpleQueue(queueName string) error
+	CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) error
+	SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) error
+	GetQueueAttributes(queueName string) (*QueueAttribute, error)
+	DeleteQueue(queueName string) error
+	ListQueue(nextMarker string, retNumber int32, prefix string) (*Queues, error)
+	ListQueueDetail(nextMarker string, retNumber int32, prefix string) (*QueueDetails, error)
 }
 
-type MNSQueueManager struct {
-	cli     MNSClient
-	decoder MNSDecoder
+type queueManager struct {
+	cli     Client
+	decoder Decoder
 }
+
+var _ QueueManager = (*queueManager)(nil)
 
 func checkQueueName(queueName string) (err error) {
 	if len(queueName) > 256 {
@@ -72,10 +74,10 @@ func checkPollingWaitSeconds(pollingWaitSeconds int32) (err error) {
 	return
 }
 
-func NewMNSQueueManager(client MNSClient) AliQueueManager {
-	return &MNSQueueManager{
+func NewQueueManager(client Client) *queueManager {
+	return &queueManager{
 		cli:     client,
-		decoder: NewAliMNSDecoder(),
+		decoder: NewDecoder(),
 	}
 }
 
@@ -98,11 +100,11 @@ func checkAttributes(delaySeconds int32, maxMessageSize int32, messageRetentionP
 	return
 }
 
-func (p *MNSQueueManager) CreateSimpleQueue(queueName string) (err error) {
+func (p *queueManager) CreateSimpleQueue(queueName string) (err error) {
 	return p.CreateQueue(queueName, 0, 65536, 345600, 30, 0, 2)
 }
 
-func (p *MNSQueueManager) CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
+func (p *queueManager) CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -136,7 +138,7 @@ func (p *MNSQueueManager) CreateQueue(queueName string, delaySeconds int32, maxM
 	return
 }
 
-func (p *MNSQueueManager) SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
+func (p *queueManager) SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -163,19 +165,19 @@ func (p *MNSQueueManager) SetQueueAttributes(queueName string, delaySeconds int3
 	return
 }
 
-func (p *MNSQueueManager) GetQueueAttributes(queueName string) (attr QueueAttribute, err error) {
+func (p *queueManager) GetQueueAttributes(queueName string) (*QueueAttribute, error) {
 	queueName = strings.TrimSpace(queueName)
 
-	if err = checkQueueName(queueName); err != nil {
-		return
+	if err := checkQueueName(queueName); err != nil {
+		return nil, err
 	}
 
-	_, err = send(p.cli, p.decoder, GET, nil, nil, "queues/"+queueName, &attr)
-
-	return
+	attr := &QueueAttribute{}
+	_, err := send(p.cli, p.decoder, GET, nil, nil, "queues/"+queueName, attr)
+	return attr, err
 }
 
-func (p *MNSQueueManager) DeleteQueue(queueName string) (err error) {
+func (p *queueManager) DeleteQueue(queueName string) (err error) {
 	queueName = strings.TrimSpace(queueName)
 
 	if err = checkQueueName(queueName); err != nil {
@@ -187,9 +189,9 @@ func (p *MNSQueueManager) DeleteQueue(queueName string) (err error) {
 	return
 }
 
-func (p *MNSQueueManager) ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error) {
-
+func (p *queueManager) ListQueue(nextMarker string, retNumber int32, prefix string) (*Queues, error) {
 	header := map[string]string{}
+	queues := &Queues{}
 
 	marker := strings.TrimSpace(nextMarker)
 	if len(marker) > 0 {
@@ -202,8 +204,7 @@ func (p *MNSQueueManager) ListQueue(nextMarker string, retNumber int32, prefix s
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -212,13 +213,11 @@ func (p *MNSQueueManager) ListQueue(nextMarker string, retNumber int32, prefix s
 		header["x-mns-prefix"] = prefix
 	}
 
-	_, err = send(p.cli, p.decoder, GET, header, nil, "queues", &queues)
-
-	return
+	_, err := send(p.cli, p.decoder, GET, header, nil, "queues", queues)
+	return queues, err
 }
 
-func (p *MNSQueueManager) ListQueueDetail(nextMarker string, retNumber int32, prefix string) (queueDetails QueueDetails, err error) {
-
+func (p *queueManager) ListQueueDetail(nextMarker string, retNumber int32, prefix string) (*QueueDetails, error) {
 	header := map[string]string{}
 
 	marker := strings.TrimSpace(nextMarker)
@@ -232,8 +231,7 @@ func (p *MNSQueueManager) ListQueueDetail(nextMarker string, retNumber int32, pr
 		if retNumber >= 1 && retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
-			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
-			return
+			return nil, ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
 		}
 	}
 
@@ -244,7 +242,7 @@ func (p *MNSQueueManager) ListQueueDetail(nextMarker string, retNumber int32, pr
 
 	header["x-mns-with-meta"] = "true"
 
-	_, err = send(p.cli, p.decoder, GET, header, nil, "queues", &queueDetails)
-
-	return
+	queueDetails := &QueueDetails{}
+	_, err := send(p.cli, p.decoder, GET, header, nil, "queues", queueDetails)
+	return queueDetails, err
 }

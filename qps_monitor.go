@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"sync/atomic"
@@ -42,7 +42,7 @@ func (p *QPSMonitor) checkQPS() {
 	if p.qpsLimit > 0 {
 		for p.QPS() > p.qpsLimit {
 			time.Sleep(time.Millisecond * 10)
-            		p.Update()
+			p.Update()
 		}
 	}
 }

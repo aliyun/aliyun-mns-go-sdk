@@ -1,10 +1,10 @@
-package ali_mns
+package mns
 
 import "encoding/xml"
 
 type AccountManager struct {
-	cli     MNSClient
-	decoder MNSDecoder
+	cli     Client
+	decoder Decoder
 }
 
 type OpenService struct {
@@ -13,10 +13,10 @@ type OpenService struct {
 	OrderId string   `xml:"OrderId" json:"order_id"`
 }
 
-func NewAccountManager(client MNSClient) *AccountManager {
+func NewAccountManager(client Client) *AccountManager {
 	return &AccountManager{
 		cli:     client,
-		decoder: NewAliMNSDecoder(),
+		decoder: NewDecoder(),
 	}
 }
 

@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"crypto/hmac"
@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	AUTHORIZATION = "Authorization"
-	CONTENT_TYPE  = "Content-Type"
-	CONTENT_MD5   = "Content-MD5"
-	MQ_VERSION    = "x-mns-version"
-	HOST          = "Host"
-	DATE          = "Date"
-	KEEP_ALIVE    = "Keep-Alive"
+	AUTHORIZATION  = "Authorization"
+	CONTENT_TYPE   = "Content-Type"
+	CONTENT_MD5    = "Content-MD5"
+	MQ_VERSION     = "x-mns-version"
+	HOST           = "Host"
+	DATE           = "Date"
+	KEEP_ALIVE     = "Keep-Alive"
 	SECURITY_TOKEN = "security-token"
 )
 
@@ -33,7 +33,7 @@ type Credential interface {
 
 type AliMNSCredential struct {
 	accessKeySecret string
-	securityToken string
+	securityToken   string
 }
 
 func NewAliMNSCredential(accessKeySecret, securityToken string) *AliMNSCredential {
@@ -55,7 +55,7 @@ func (p *AliMNSCredential) GetSecretKey() (accessKeySecret string) {
 	return p.accessKeySecret
 }
 
-func (p* AliMNSCredential) GetSecurityToken() (securityToken string) {
+func (p *AliMNSCredential) GetSecurityToken() (securityToken string) {
 	return p.securityToken
 }
 

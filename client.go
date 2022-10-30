@@ -1,4 +1,4 @@
-package ali_mns
+package mns
 
 import (
 	"bytes"
@@ -24,7 +24,7 @@ const (
 )
 
 const (
-	GLOBAL_PROXY = "MNS_GLOBAL_PROXY"
+	GlobalProxy = "MNS_GLOBAL_PROXY"
 )
 
 const (
@@ -53,15 +53,14 @@ const (
 	DELETE        = "DELETE"
 )
 
-type MNSClient interface {
+type Client interface {
 	Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error)
 	SetProxy(url string)
-
-	getAccountID() (accountId string)
-	getRegion() (region string)
+	GetAccountID() (accountId string)
+	GetRegion() (region string)
 }
 
-type aliMNSClient struct {
+type client struct {
 	Timeout     int64
 	url         *neturl.URL
 	credential  Credential
@@ -75,7 +74,9 @@ type aliMNSClient struct {
 	clientLocker sync.Mutex
 }
 
-type AliMNSClientConfig struct {
+var _ Client = (*client)(nil)
+
+type ClientConfig struct {
 	EndPoint        string
 	AccessKeyId     string
 	AccessKeySecret string
@@ -83,8 +84,8 @@ type AliMNSClientConfig struct {
 	TimeoutSecond   int64
 }
 
-func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
-	return NewAliMNSClientWithConfig(AliMNSClientConfig{
+func NewClient(inputUrl, accessKeyId, accessKeySecret string) *client {
+	return NewClientWithConfig(ClientConfig{
 		EndPoint:        inputUrl,
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
@@ -93,8 +94,8 @@ func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 	})
 }
 
-func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
-	return NewAliMNSClientWithConfig(AliMNSClientConfig{
+func NewClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) *client {
+	return NewClientWithConfig(ClientConfig{
 		EndPoint:        inputUrl,
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
@@ -103,14 +104,14 @@ func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token stri
 	})
 }
 
-func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
+func NewClientWithConfig(clientConfig ClientConfig) *client {
 	if clientConfig.EndPoint == "" {
 		panic("ali-mns: message queue url is empty")
 	}
 
 	credential := NewAliMNSCredential(clientConfig.AccessKeySecret, clientConfig.Token)
 
-	cli := new(aliMNSClient)
+	cli := new(client)
 	cli.credential = credential
 	cli.accessKeyId = clientConfig.AccessKeyId
 	cli.Timeout = clientConfig.TimeoutSecond
@@ -132,8 +133,8 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 	regionSlice := strings.Split(pieces[2], "-internal")
 	cli.region = regionSlice[0]
 
-	if globalurl := os.Getenv(GLOBAL_PROXY); globalurl != "" {
-		cli.proxyURL = globalurl
+	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
+		cli.proxyURL = globalUrl
 	}
 
 	// 2. now init http client
@@ -144,15 +145,15 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 	return cli
 }
 
-func (p aliMNSClient) getAccountID() (accountId string) {
+func (p *client) GetAccountID() (accountId string) {
 	return p.accountId
 }
 
-func (p aliMNSClient) getRegion() (region string) {
+func (p *client) GetRegion() (region string) {
 	return p.region
 }
 
-func (p *aliMNSClient) SetProxy(url string) {
+func (p *client) SetProxy(url string) {
 	if url == p.proxyURL {
 		return
 	}
@@ -160,7 +161,7 @@ func (p *aliMNSClient) SetProxy(url string) {
 	p.proxyURL = url
 }
 
-func (p *aliMNSClient) initFastHttpClient() {
+func (p *client) initFastHttpClient() {
 	p.clientLocker.Lock()
 	defer p.clientLocker.Unlock()
 
@@ -175,14 +176,14 @@ func (p *aliMNSClient) initFastHttpClient() {
 	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: ClientName}
 }
 
-func (p *aliMNSClient) proxy(req *http.Request) (*neturl.URL, error) {
+func (p *client) proxy(req *http.Request) (*neturl.URL, error) {
 	if p.proxyURL != "" {
 		return neturl.Parse(p.proxyURL)
 	}
 	return nil, nil
 }
 
-func (p *aliMNSClient) authorization(method Method, headers map[string]string, resource string) (authHeader string, err error) {
+func (p *client) authorization(method Method, headers map[string]string, resource string) (authHeader string, err error) {
 	if signature, e := p.credential.Signature(method, headers, resource); e != nil {
 		return "", e
 	} else {
@@ -192,7 +193,7 @@ func (p *aliMNSClient) authorization(method Method, headers map[string]string, r
 	return
 }
 
-func (p *aliMNSClient) Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error) {
+func (p *client) Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error) {
 	var xmlContent []byte
 	var err error
 
