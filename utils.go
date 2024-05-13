@@ -43,10 +43,14 @@ func send(client MNSClient, decoder MNSDecoder, method Method, headers map[strin
 			}
 
 			if baseResponder, ok := v.(BaseResponder); ok {
+				hostId := ""
+				if resp.RemoteAddr() != nil {
+					hostId = resp.RemoteAddr().String()
+				}
 				baseResponder.SetBaseResponse(BaseResponse{
 					RequestId: string(resp.Header.Peek("x-mns-request-id")),
 					Code:      strconv.Itoa(resp.StatusCode()),
-					HostId:    resp.RemoteAddr().String(),
+					HostId:    hostId,
 				})
 			}
 		}

@@ -56,7 +56,7 @@ const (
 type MNSClient interface {
 	Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error)
 	SetProxy(url string)
-
+	SetTransport(transport fasthttp.RoundTripper)
 	getAccountID() (accountId string)
 	getRegion() (region string)
 }
@@ -173,6 +173,13 @@ func (p *aliMNSClient) initFastHttpClient() {
 	timeout := time.Second * time.Duration(timeoutInt)
 
 	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: ClientName}
+}
+
+func (p *aliMNSClient) SetTransport(transport fasthttp.RoundTripper) {
+	p.client.ConfigureClient = func(hc *fasthttp.HostClient) error {
+		hc.Transport = transport
+		return nil
+	}
 }
 
 func (p *aliMNSClient) proxy(req *http.Request) (*neturl.URL, error) {
