@@ -1,9 +1,8 @@
-module git.soma.salesforce.com/chameleon/aliyun-mns-go-sdk
+module github.com/aliyun/aliyun-mns-go-sdk
 
 go 1.20
 
 require (
-	github.com/aliyun/aliyun-mns-go-sdk v1.0.2
 	github.com/gogap/errors v0.0.0-20210818113853-edfbba0ddea9
 	github.com/gogap/logs v0.0.0-20150329044033-31c6d1e28b2c
 	github.com/valyala/fasthttp v1.52.0
