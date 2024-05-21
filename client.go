@@ -15,6 +15,7 @@ import (
 
 	"github.com/gogap/errors"
 	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
 const (
@@ -172,7 +173,7 @@ func (p *aliMNSClient) initFastHttpClient() {
 
 	timeout := time.Second * time.Duration(timeoutInt)
 
-	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: ClientName}
+	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: ClientName, Dial: fasthttpproxy.FasthttpProxyHTTPDialer()}
 }
 
 func (p *aliMNSClient) SetTransport(transport fasthttp.RoundTripper) {
