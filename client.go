@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/shirou/gopsutil/host"
 	"net/http"
 	neturl "net/url"
 	"os"
@@ -35,6 +34,11 @@ const (
 
 const (
 	DefaultTimeout int64 = 35
+)
+
+const (
+	AliyunAkEnvKey = "ALIBABA_CLOUD_ACCESS_KEY_ID"
+	AliyunSkEnvKey = "ALIBABA_CLOUD_ACCESS_KEY_SECRET"
 )
 
 type Method string
@@ -84,6 +88,25 @@ type AliMNSClientConfig struct {
 	TimeoutSecond   int64
 }
 
+// NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
+// For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
+func NewClient(endpoint string) MNSClient {
+	return NewClientWithToken(endpoint, "")
+}
+
+// NewClientWithToken Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
+// For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
+func NewClientWithToken(endpoint, token string) MNSClient {
+	return NewAliMNSClientWithConfig(AliMNSClientConfig{
+		EndPoint:        endpoint,
+		AccessKeyId:     os.Getenv(AliyunAkEnvKey),
+		AccessKeySecret: os.Getenv(AliyunSkEnvKey),
+		Token:           token,
+		TimeoutSecond:   DefaultTimeout,
+	})
+}
+
+// Deprecated: Use NewClient instead.
 func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
@@ -94,6 +117,7 @@ func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 	})
 }
 
+// Deprecated: Use NewClientWithToken instead.
 func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
@@ -311,11 +335,8 @@ func initMNSErrors() {
 }
 
 func getDefaultUserAgent() string {
-	platform, _, _, _ := host.PlatformInformation()
-	osVersion, _ := host.KernelVersion()
-	osArch, _ := host.KernelArch()
 	goVersion := strings.TrimPrefix(runtime.Version(), "go")
-	return fmt.Sprintf("aliyun-sdk-go/%s(%s/%s/%s;%s)", Version, platform, osVersion, osArch, goVersion)
+	return fmt.Sprintf("%s/%s(%s/%s/%s;%s)", SdkName, Version, runtime.GOOS, "-", runtime.GOARCH, goVersion)
 }
 
 func ParseError(resp ErrorResponse, resource string) (err error) {

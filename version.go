@@ -1,3 +1,6 @@
 package ali_mns
 
-const Version = "1.0.3"
+const (
+	SdkName = "aliyun-sdk-go"
+	Version = "1.0.3"
+)
