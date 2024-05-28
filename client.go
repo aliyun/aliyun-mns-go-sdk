@@ -6,9 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"github.com/shirou/gopsutil/host"
 	"net/http"
 	neturl "net/url"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -32,7 +34,6 @@ const (
 )
 
 const (
-	ClientName           = "mns-go-sdk/1.0.2(fasthttp)"
 	DefaultTimeout int64 = 35
 )
 
@@ -172,7 +173,7 @@ func (p *aliMNSClient) initFastHttpClient() {
 
 	timeout := time.Second * time.Duration(timeoutInt)
 
-	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: ClientName}
+	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: getDefaultUserAgent()}
 }
 
 func (p *aliMNSClient) SetTransport(transport fasthttp.RoundTripper) {
@@ -307,6 +308,14 @@ func initMNSErrors() {
 		"EndpointInvalid":             ERR_MNS_INVALID_ENDPOINT,
 		"SubscriberNotExist":          ERR_MNS_SUBSCRIBER_NOT_EXIST,
 	}
+}
+
+func getDefaultUserAgent() string {
+	platform, _, _, _ := host.PlatformInformation()
+	osVersion, _ := host.KernelVersion()
+	osArch, _ := host.KernelArch()
+	goVersion := strings.TrimPrefix(runtime.Version(), "go")
+	return fmt.Sprintf("aliyun-sdk-go/%s(%s/%s/%s;%s)", Version, platform, osVersion, osArch, goVersion)
 }
 
 func ParseError(resp ErrorResponse, resource string) (err error) {

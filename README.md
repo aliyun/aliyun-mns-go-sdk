@@ -1,4 +1,7 @@
 # MNS GO SDK
+1.0.3
+  - support custom transport configuration
+
 1.0.2
   - support OpenService API
 
