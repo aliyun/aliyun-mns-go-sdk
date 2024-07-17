@@ -1,64 +1,41 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/gogap/logs"
 	"github.com/aliyun/aliyun-mns-go-sdk"
+	"github.com/gogap/logs"
 )
-
-type appConf struct {
-	Url             string `json:"url"`
-	AccessKeyId     string `json:"access_key_id"`
-	AccessKeySecret string `json:"access_key_secret"`
-}
 
 func main() {
 	go func() {
 		log.Println(http.ListenAndServe("localhost:8080", nil))
 	}()
 
-	conf := appConf{}
-
-	if bFile, e := ioutil.ReadFile("app.conf"); e != nil {
-		panic(e)
-	} else {
-		if e := json.Unmarshal(bFile, &conf); e != nil {
-			panic(e)
-		}
-	}
-
-	client := ali_mns.NewAliMNSClient(conf.Url,
-		conf.AccessKeyId,
-		conf.AccessKeySecret)
-
+	// Replace with your own endpoint.
+	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	client := ali_mns.NewClient(endpoint)
 	msg := ali_mns.MessageSendRequest{
 		MessageBody:  "hello <\"aliyun-mns-go-sdk\">",
 		DelaySeconds: 0,
 		Priority:     8}
 
 	queueManager := ali_mns.NewMNSQueueManager(client)
-
-	err := queueManager.CreateQueue("test", 0, 65536, 345600, 30, 0, 3)
-
+	queueName := "test-queue"
+	err := queueManager.CreateQueue(queueName, 0, 65536, 345600, 30, 0, 3)
 	time.Sleep(time.Duration(2) * time.Second)
-
 	if err != nil && !ali_mns.ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
 		fmt.Println(err)
 		return
 	}
 
-	queue := ali_mns.NewMNSQueue("test", client)
-
+	queue := ali_mns.NewMNSQueue(queueName, client)
 	for i := 1; i < 10000; i++ {
 		ret, err := queue.SendMessage(msg)
-
 		go func() {
 			fmt.Println(queue.QPSMonitor().QPS())
 		}()
@@ -66,7 +43,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			logs.Pretty("response:", ret)
+			logs.Pretty("response: ", ret)
 		}
 
 		endChan := make(chan int)
@@ -76,7 +53,7 @@ func main() {
 			select {
 			case resp := <-respChan:
 				{
-					logs.Pretty("response:", resp)
+					logs.Pretty("response: ", resp)
 					logs.Debug("change the visibility: ", resp.ReceiptHandle)
 					if ret, e := queue.ChangeMessageVisibility(resp.ReceiptHandle, 5); e != nil {
 						fmt.Println(e)

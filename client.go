@@ -9,6 +9,7 @@ import (
 	"net/http"
 	neturl "net/url"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -24,7 +25,7 @@ const (
 )
 
 const (
-	GLOBAL_PROXY = "MNS_GLOBAL_PROXY"
+	GlobalProxy = "MNS_GLOBAL_PROXY"
 )
 
 const (
@@ -32,8 +33,13 @@ const (
 )
 
 const (
-	ClientName           = "mns-go-sdk/1.0.2(fasthttp)"
-	DefaultTimeout int64 = 35
+	DefaultTimeout         int64 = 35
+	DefaultMaxConnsPerHost int   = 512
+)
+
+const (
+	AliyunAkEnvKey = "ALIBABA_CLOUD_ACCESS_KEY_ID"
+	AliyunSkEnvKey = "ALIBABA_CLOUD_ACCESS_KEY_SECRET"
 )
 
 type Method string
@@ -57,22 +63,21 @@ type MNSClient interface {
 	Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error)
 	SetProxy(url string)
 	SetTransport(transport fasthttp.RoundTripper)
-	getAccountID() (accountId string)
+	getAccountId() (accountId string)
 	getRegion() (region string)
 }
 
 type aliMNSClient struct {
-	Timeout     int64
-	url         *neturl.URL
-	credential  Credential
-	accessKeyId string
-	client      *fasthttp.Client
-	proxyURL    string
-
-	accountId string
-	region    string
-
-	clientLocker sync.Mutex
+	Timeout         int64
+	MaxConnsPerHost int
+	url             *neturl.URL
+	credential      Credential
+	accessKeyId     string
+	client          *fasthttp.Client
+	proxyURL        string
+	accountId       string
+	region          string
+	clientLocker    sync.Mutex
 }
 
 type AliMNSClientConfig struct {
@@ -81,8 +86,29 @@ type AliMNSClientConfig struct {
 	AccessKeySecret string
 	Token           string
 	TimeoutSecond   int64
+	MaxConnsPerHost int
 }
 
+// NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
+// For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
+func NewClient(endpoint string) MNSClient {
+	return NewClientWithToken(endpoint, "")
+}
+
+// NewClientWithToken Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
+// For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
+func NewClientWithToken(endpoint, token string) MNSClient {
+	return NewAliMNSClientWithConfig(AliMNSClientConfig{
+		EndPoint:        endpoint,
+		AccessKeyId:     os.Getenv(AliyunAkEnvKey),
+		AccessKeySecret: os.Getenv(AliyunSkEnvKey),
+		Token:           token,
+		TimeoutSecond:   DefaultTimeout,
+		MaxConnsPerHost: DefaultMaxConnsPerHost,
+	})
+}
+
+// Deprecated: Use NewClient instead.
 func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
@@ -90,9 +116,11 @@ func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 		AccessKeySecret: accessKeySecret,
 		Token:           "",
 		TimeoutSecond:   DefaultTimeout,
+		MaxConnsPerHost: DefaultMaxConnsPerHost,
 	})
 }
 
+// Deprecated: Use NewClientWithToken instead.
 func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
@@ -100,6 +128,7 @@ func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token stri
 		AccessKeySecret: accessKeySecret,
 		Token:           token,
 		TimeoutSecond:   DefaultTimeout,
+		MaxConnsPerHost: DefaultMaxConnsPerHost,
 	})
 }
 
@@ -109,18 +138,22 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 	}
 
 	credential := NewAliMNSCredential(clientConfig.AccessKeySecret, clientConfig.Token)
-
 	cli := new(aliMNSClient)
 	cli.credential = credential
 	cli.accessKeyId = clientConfig.AccessKeyId
 	cli.Timeout = clientConfig.TimeoutSecond
+	if clientConfig.MaxConnsPerHost != 0 {
+		cli.MaxConnsPerHost = clientConfig.MaxConnsPerHost
+	} else {
+		cli.MaxConnsPerHost = DefaultMaxConnsPerHost
+	}
 
 	var err error
 	if cli.url, err = neturl.Parse(clientConfig.EndPoint); err != nil {
 		panic("err parse url")
 	}
 
-	// 1. parse region and accountid
+	// 1. parse region and accountId
 	pieces := strings.Split(clientConfig.EndPoint, ".")
 	if len(pieces) != 5 {
 		panic("ali-mns: message queue url is invalid")
@@ -128,23 +161,20 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 
 	accountIdSlice := strings.Split(pieces[0], "/")
 	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
-
 	regionSlice := strings.Split(pieces[2], "-internal")
 	cli.region = regionSlice[0]
-
-	if globalurl := os.Getenv(GLOBAL_PROXY); globalurl != "" {
-		cli.proxyURL = globalurl
+	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
+		cli.proxyURL = globalUrl
 	}
 
 	// 2. now init http client
 	cli.initFastHttpClient()
 	//change to dial dual stack to support both ipv4 and ipv6
 	cli.client.DialDualStack = true
-
 	return cli
 }
 
-func (p aliMNSClient) getAccountID() (accountId string) {
+func (p aliMNSClient) getAccountId() (accountId string) {
 	return p.accountId
 }
 
@@ -163,16 +193,13 @@ func (p *aliMNSClient) SetProxy(url string) {
 func (p *aliMNSClient) initFastHttpClient() {
 	p.clientLocker.Lock()
 	defer p.clientLocker.Unlock()
-
 	timeoutInt := DefaultTimeout
-
 	if p.Timeout > 0 {
 		timeoutInt = p.Timeout
 	}
 
 	timeout := time.Second * time.Duration(timeoutInt)
-
-	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, Name: ClientName}
+	p.client = &fasthttp.Client{ReadTimeout: timeout, WriteTimeout: timeout, MaxConnsPerHost: p.MaxConnsPerHost, Name: getDefaultUserAgent()}
 }
 
 func (p *aliMNSClient) SetTransport(transport fasthttp.RoundTripper) {
@@ -182,7 +209,7 @@ func (p *aliMNSClient) SetTransport(transport fasthttp.RoundTripper) {
 	}
 }
 
-func (p *aliMNSClient) proxy(req *http.Request) (*neturl.URL, error) {
+func (p *aliMNSClient) proxy() (*neturl.URL, error) {
 	if p.proxyURL != "" {
 		return neturl.Parse(p.proxyURL)
 	}
@@ -307,6 +334,11 @@ func initMNSErrors() {
 		"EndpointInvalid":             ERR_MNS_INVALID_ENDPOINT,
 		"SubscriberNotExist":          ERR_MNS_SUBSCRIBER_NOT_EXIST,
 	}
+}
+
+func getDefaultUserAgent() string {
+	goVersion := strings.TrimPrefix(runtime.Version(), "go")
+	return fmt.Sprintf("%s/%s(%s/%s/%s;%s)", SdkName, Version, runtime.GOOS, "-", runtime.GOARCH, goVersion)
 }
 
 func ParseError(resp ErrorResponse, resource string) (err error) {
