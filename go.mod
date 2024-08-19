@@ -1,6 +1,6 @@
 module github.com/aliyun/aliyun-mns-go-sdk
 
-go 1.20
+go 1.18
 
 require (
 	github.com/gogap/errors v0.0.0-20210818113853-edfbba0ddea9
