@@ -1,6 +1,6 @@
 # Aliyun MNS Go SDK
 
-[![Github version](https://badgen.net/badge/color/1.0.3/green?label=version)](https://badgen.net/badge/color/1.0.3/green?label=version)
+[![Github version](https://badgen.net/badge/color/1.0.5/green?label=version)](https://badgen.net/badge/color/1.0.5/green?label=version)
 
 Aliyun MNS Go SDK 是 MNS 在 Go 编译语言的官方 SDK
 
@@ -17,7 +17,7 @@ Aliyun MNS Go SDK 是 MNS 在 Go 编译语言的官方 SDK
 
 ## 运行环境
 
-- Go 1.18 及以上
+- Go 1.20 及以上
 
 ## 安装方法
 
