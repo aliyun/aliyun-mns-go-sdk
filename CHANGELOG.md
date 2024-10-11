@@ -1,5 +1,8 @@
 # Change log
 
+## 1.0.6
+- Added an example of HTTP endpoint subscription in `topic_example.go`.
+
 ## 1.0.5
 - update the minimum Go version declared in go.mod to fix build failures.
 
