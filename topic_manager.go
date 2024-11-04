@@ -50,10 +50,6 @@ func (p *MNSTopicManager) CreateTopic(topicName string, maxMessageSize int32, lo
 		return
 	}
 
-	if err = checkMaxMessageSize(maxMessageSize); err != nil {
-		return
-	}
-
 	message := CreateTopicRequest{
 		MaxMessageSize: maxMessageSize,
 		LoggingEnabled: loggingEnabled,
@@ -74,10 +70,6 @@ func (p *MNSTopicManager) SetTopicAttributes(topicName string, maxMessageSize in
 	topicName = strings.TrimSpace(topicName)
 
 	if err = checkTopicName(topicName); err != nil {
-		return
-	}
-
-	if err = checkMaxMessageSize(maxMessageSize); err != nil {
 		return
 	}
 

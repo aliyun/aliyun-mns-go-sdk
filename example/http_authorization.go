@@ -38,14 +38,19 @@ func main() {
 
 	method := "POST"
 	path := "/api/test"
-	if authenticate(method, path, headers) {
+	if authenticateWithHeaderMap(method, path, toLowercaseKeys(headers)) {
 		fmt.Println("Signature verification succeeded")
 	} else {
 		fmt.Println("Signature verification failed")
 	}
 }
 
-func authenticate(method, path string, headers map[string]string) bool {
+func authenticateWithResponse(method, path string, resp *http.Response) bool {
+	headersMap := headersToMap(resp)
+	return authenticateWithHeaderMap(method, path, headersMap)
+}
+
+func authenticateWithHeaderMap(method, path string, headers map[string]string) bool {
 	// Get string to sign
 	var serviceHeaders []string
 	for k, v := range headers {
@@ -57,7 +62,7 @@ func authenticate(method, path string, headers map[string]string) bool {
 	sort.Strings(serviceHeaders)
 	serviceStr := strings.Join(serviceHeaders, "\n")
 	var signHeaderList []string
-	for _, key := range []string{"Content-md5", "Content-Type", "Date"} {
+	for _, key := range []string{"content-md5", "content-type", "date"} {
 		if val, ok := headers[key]; ok {
 			signHeaderList = append(signHeaderList, val)
 		} else {
@@ -119,7 +124,7 @@ func authenticate(method, path string, headers map[string]string) bool {
 	}
 
 	// 对Authorization字段做Base64解码
-	signatureBase64, ok := headers["Authorization"]
+	signatureBase64, ok := headers["authorization"]
 	if !ok {
 		fmt.Println("Authorization Header not found")
 		return false
@@ -142,4 +147,25 @@ func authenticate(method, path string, headers map[string]string) bool {
 	}
 
 	return true
+}
+
+func headersToMap(resp *http.Response) map[string]string {
+	headersMap := make(map[string]string)
+	for key, values := range resp.Header {
+		// 连接多个值为一个字符串，使用逗号分隔
+		// map 键值全小写
+		lowercaseKey := strings.ToLower(key)
+		headersMap[lowercaseKey] = strings.Join(values, ",")
+	}
+	return headersMap
+}
+
+// HTTP header 不区分大小写，将 map 的 keys 转换为全小写
+func toLowercaseKeys(input map[string]string) map[string]string {
+	output := make(map[string]string)
+	for k, v := range input {
+		lowercaseKey := strings.ToLower(k)
+		output[lowercaseKey] = v
+	}
+	return output
 }

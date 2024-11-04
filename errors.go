@@ -72,7 +72,7 @@ var (
 	ERR_MNS_MAX_MESSAGE_SIZE_RANGE_ERROR           = errors.TN(ALI_MNS_ERR_NS, 128, "max message size is not in range of (1024~65536)")
 	ERR_MNS_MSG_RETENTION_PERIOD_RANGE_ERROR       = errors.TN(ALI_MNS_ERR_NS, 129, "message retention period is not in range of (60~129600)")
 	ERR_MNS_MSG_VISIBILITY_TIMEOUT_RANGE_ERROR     = errors.TN(ALI_MNS_ERR_NS, 130, "message visibility timeout is not in range of (1~43200)")
-	ERR_MNS_MSG_POOLLING_WAIT_SECONDS_RANGE_ERROR  = errors.TN(ALI_MNS_ERR_NS, 131, "message poolling wait seconds is not in range of (0~30)")
+	ERR_MNS_MSG_POOLLING_WAIT_SECONDS_RANGE_ERROR  = errors.TN(ALI_MNS_ERR_NS, 131, "message polling wait seconds is not in range of (0~30)")
 	ERR_MNS_RET_NUMBER_RANGE_ERROR                 = errors.TN(ALI_MNS_ERR_NS, 132, "list param of ret number is not in range of (1~1000)")
 	ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR = errors.TN(ALI_MNS_ERR_NS, 133, "mns queue already exist, and the attribute is the same, queue name: {{.name}}")
 	ERR_MNS_BATCH_OP_FAIL                          = errors.TN(ALI_MNS_ERR_NS, 136, "mns queue batch operation fail")
