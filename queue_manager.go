@@ -40,14 +40,6 @@ func checkDelaySeconds(seconds int32) (err error) {
 	return
 }
 
-func checkMaxMessageSize(maxSize int32) (err error) {
-	if maxSize < 1024 || maxSize > 262144 {
-		err = ERR_MNS_MAX_MESSAGE_SIZE_RANGE_ERROR.New()
-		return
-	}
-	return
-}
-
 func checkMessageRetentionPeriod(retentionPeriod int32) (err error) {
 	if retentionPeriod < 60 || retentionPeriod > 1296000 {
 		err = ERR_MNS_MSG_RETENTION_PERIOD_RANGE_ERROR.New()
@@ -79,11 +71,8 @@ func NewMNSQueueManager(client MNSClient) AliQueueManager {
 	}
 }
 
-func checkAttributes(delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32) (err error) {
+func checkAttributes(delaySeconds int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32) (err error) {
 	if err = checkDelaySeconds(delaySeconds); err != nil {
-		return
-	}
-	if err = checkMaxMessageSize(maxMessageSize); err != nil {
 		return
 	}
 	if err = checkMessageRetentionPeriod(messageRetentionPeriod); err != nil {
@@ -110,7 +99,6 @@ func (p *MNSQueueManager) CreateQueue(queueName string, delaySeconds int32, maxM
 	}
 
 	if err = checkAttributes(delaySeconds,
-		maxMessageSize,
 		messageRetentionPeriod,
 		visibilityTimeout,
 		pollingWaitSeconds); err != nil {
@@ -144,7 +132,6 @@ func (p *MNSQueueManager) SetQueueAttributes(queueName string, delaySeconds int3
 	}
 
 	if err = checkAttributes(delaySeconds,
-		maxMessageSize,
 		messageRetentionPeriod,
 		visibilityTimeout,
 		pollingWaitSeconds); err != nil {

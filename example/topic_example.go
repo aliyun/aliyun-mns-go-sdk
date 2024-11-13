@@ -13,7 +13,8 @@ func main() {
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
 	queueName := "test-queue"
 	topicName := "test-topic"
-	subName := "test-sub"
+	queueSubName := "test-sub-queue"
+	httpSubName := "test-sub-http"
 	client := ali_mns.NewClient(endpoint)
 
 	// 1. create a queue for receiving pushed messages
@@ -33,15 +34,26 @@ func main() {
 		return
 	}
 
-	// 3. subscribe to topic, the endpoint is set to be a queue in this example
 	topic := ali_mns.NewMNSTopic(topicName, client)
-	sub := ali_mns.MessageSubsribeRequest{
+	// 3. subscribe to topic, the endpoint is queue
+	queueSub := ali_mns.MessageSubsribeRequest{
 		Endpoint:            topic.GenerateQueueEndpoint(queueName),
 		NotifyContentFormat: ali_mns.SIMPLIFIED,
 	}
 
-	// topic.Unsubscribe("SubscriptionNameA")
-	err = topic.Subscribe(subName, sub)
+	// 4. subscribe to topic, the endpoint is HTTP(S)
+	httpSub := ali_mns.MessageSubsribeRequest{
+		Endpoint:            "http://www.baidu.com",
+		NotifyContentFormat: ali_mns.SIMPLIFIED,
+	}
+
+	err = topic.Subscribe(queueSubName, queueSub)
+	if err != nil && !ali_mns.ERR_MNS_SUBSCRIPTION_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
+		fmt.Println(err)
+		return
+	}
+
+	err = topic.Subscribe(httpSubName, httpSub)
 	if err != nil && !ali_mns.ERR_MNS_SUBSCRIPTION_ALREADY_EXIST_AND_HAVE_SAME_ATTR.IsEqual(err) {
 		fmt.Println(err)
 		return
@@ -65,7 +77,7 @@ func main() {
 
 	time.Sleep(time.Duration(2) * time.Second)
 
-	// 4. now publish message
+	// 5. now publish message
 	msg := ali_mns.MessagePublishRequest{
 		MessageBody: "hello topic <\"aliyun-mns-go-sdk\">",
 		MessageAttributes: &ali_mns.MessageAttributes{
@@ -81,7 +93,7 @@ func main() {
 		return
 	}
 
-	// 5. receive the message from queue
+	// 6. receive the message from queue
 	queue := ali_mns.NewMNSQueue(queueName, client)
 	endChan := make(chan int)
 	respChan := make(chan ali_mns.MessageReceiveResponse)
