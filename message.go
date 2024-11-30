@@ -296,3 +296,8 @@ type SubscriptionDetails struct {
 	Attrs      []SubscriptionAttribute `xml:"Subscription" json:"subscriptions"`
 	NextMarker string                  `xml:"NextMarker" json:"next_marker"`
 }
+
+type OpenService struct {
+	XMLName xml.Name `xml:"OpenService" json:"-"`
+	OrderId string   `xml:"OrderId" json:"order_id"`
+}
