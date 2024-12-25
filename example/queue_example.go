@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"time"
 
 	"github.com/aliyun/aliyun-mns-go-sdk"
@@ -17,10 +19,16 @@ func main() {
 	}()
 
 	// Replace with your own endpoint.
-	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
+	isBase64 := os.Getenv("IS_BASE64") == "true"
 	client := ali_mns.NewClient(endpoint)
+	messageBody := "hello <\"aliyun-mns-go-sdk\">"
+	if isBase64 {
+		messageBody = base64.StdEncoding.EncodeToString([]byte(messageBody))
+	}
+
 	msg := ali_mns.MessageSendRequest{
-		MessageBody:  "hello <\"aliyun-mns-go-sdk\">",
+		MessageBody:  messageBody,
 		DelaySeconds: 0,
 		Priority:     8}
 
@@ -34,7 +42,7 @@ func main() {
 	}
 
 	queue := ali_mns.NewMNSQueue(queueName, client)
-	for i := 1; i < 10000; i++ {
+	for i := 1; i < 10; i++ {
 		ret, err := queue.SendMessage(msg)
 		go func() {
 			fmt.Println(queue.QPSMonitor().QPS())
@@ -54,6 +62,18 @@ func main() {
 			case resp := <-respChan:
 				{
 					logs.Pretty("response: ", resp)
+					if isBase64 {
+						decodedBytes, err := base64.StdEncoding.DecodeString(resp.MessageBody)
+						if err != nil {
+							fmt.Println("Error decoding Base64:", err)
+							return
+						}
+
+						logs.Pretty("message: ", string(decodedBytes))
+					} else {
+						logs.Pretty("message: ", resp.MessageBody)
+					}
+
 					logs.Debug("change the visibility: ", resp.ReceiptHandle)
 					if ret, e := queue.ChangeMessageVisibility(resp.ReceiptHandle, 5); e != nil {
 						fmt.Println(e)
