@@ -13,53 +13,17 @@ import (
 )
 
 const (
-	AUTHORIZATION = "Authorization"
-	CONTENT_TYPE  = "Content-Type"
-	CONTENT_MD5   = "Content-MD5"
-	MQ_VERSION    = "x-mns-version"
-	HOST          = "Host"
-	DATE          = "Date"
-	KEEP_ALIVE    = "Keep-Alive"
+	AUTHORIZATION  = "Authorization"
+	CONTENT_TYPE   = "Content-Type"
+	CONTENT_MD5    = "Content-MD5"
+	MQ_VERSION     = "x-mns-version"
+	HOST           = "Host"
+	DATE           = "Date"
+	KEEP_ALIVE     = "Keep-Alive"
 	SECURITY_TOKEN = "security-token"
 )
 
-type Credential interface {
-	Signature(method Method, headers map[string]string, resource string) (signature string, err error)
-	SetSecretKey(accessKeySecret string)
-	SetSecurityToken(securityToken string)
-	GetSecretKey() (accessKeySecret string)
-	GetSecurityToken() (securityToken string)
-}
-
-type AliMNSCredential struct {
-	accessKeySecret string
-	securityToken string
-}
-
-func NewAliMNSCredential(accessKeySecret, securityToken string) *AliMNSCredential {
-	aliMNSCredential := new(AliMNSCredential)
-	aliMNSCredential.accessKeySecret = accessKeySecret
-	aliMNSCredential.securityToken = securityToken
-	return aliMNSCredential
-}
-
-func (p *AliMNSCredential) SetSecretKey(accessKeySecret string) {
-	p.accessKeySecret = accessKeySecret
-}
-
-func (p *AliMNSCredential) SetSecurityToken(securityToken string) {
-	p.securityToken = securityToken
-}
-
-func (p *AliMNSCredential) GetSecretKey() (accessKeySecret string) {
-	return p.accessKeySecret
-}
-
-func (p* AliMNSCredential) GetSecurityToken() (securityToken string) {
-	return p.securityToken
-}
-
-func (p *AliMNSCredential) Signature(method Method, headers map[string]string, resource string) (signature string, err error) {
+func getSignature(method Method, headers map[string]string, resource, accessKeySecret string) (signature string, err error) {
 	signItems := []string{}
 	signItems = append(signItems, string(method))
 
@@ -96,7 +60,7 @@ func (p *AliMNSCredential) Signature(method Method, headers map[string]string, r
 		strings.Join(mnsHeaders, "\n") + "\n" +
 		resource
 
-	sha1Hash := hmac.New(sha1.New, []byte(p.accessKeySecret))
+	sha1Hash := hmac.New(sha1.New, []byte(accessKeySecret))
 	if _, e := sha1Hash.Write([]byte(stringToSign)); e != nil {
 		err = ERR_SIGN_MESSAGE_FAILED.New(errors.Params{"err": e})
 		return

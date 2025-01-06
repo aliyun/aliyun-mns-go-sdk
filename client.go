@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aliyun/credentials-go/credentials"
 	"github.com/gogap/errors"
 	"github.com/valyala/fasthttp"
 )
@@ -71,7 +72,7 @@ type aliMNSClient struct {
 	Timeout         int64
 	MaxConnsPerHost int
 	url             *neturl.URL
-	credential      Credential
+	credential      credentials.Credential
 	accessKeyId     string
 	client          *fasthttp.Client
 	proxyURL        string
@@ -85,6 +86,7 @@ type AliMNSClientConfig struct {
 	AccessKeyId     string
 	AccessKeySecret string
 	Token           string
+	Credential      credentials.Credential
 	TimeoutSecond   int64
 	MaxConnsPerHost int
 }
@@ -137,11 +139,17 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 		panic("ali-mns: message queue url is empty")
 	}
 
-	credential := NewAliMNSCredential(clientConfig.AccessKeySecret, clientConfig.Token)
 	cli := new(aliMNSClient)
-	cli.credential = credential
-	cli.accessKeyId = clientConfig.AccessKeyId
 	cli.Timeout = clientConfig.TimeoutSecond
+	if clientConfig.Credential != nil {
+		cli.credential = clientConfig.Credential
+	} else {
+		cli.credential = &credentials.StsTokenCredential{
+			AccessKeyId:     clientConfig.AccessKeyId,
+			AccessKeySecret: clientConfig.AccessKeySecret,
+			SecurityToken:   clientConfig.Token,
+		}
+	}
 	if clientConfig.MaxConnsPerHost != 0 {
 		cli.MaxConnsPerHost = clientConfig.MaxConnsPerHost
 	} else {
@@ -216,16 +224,6 @@ func (p *aliMNSClient) proxy() (*neturl.URL, error) {
 	return nil, nil
 }
 
-func (p *aliMNSClient) authorization(method Method, headers map[string]string, resource string) (authHeader string, err error) {
-	if signature, e := p.credential.Signature(method, headers, resource); e != nil {
-		return "", e
-	} else {
-		authHeader = fmt.Sprintf("MNS %s:%s", p.accessKeyId, signature)
-	}
-
-	return
-}
-
 func (p *aliMNSClient) Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error) {
 	var xmlContent []byte
 	var err error
@@ -260,15 +258,19 @@ func (p *aliMNSClient) Send(method Method, headers map[string]string, message in
 	headers[CONTENT_MD5] = base64.StdEncoding.EncodeToString([]byte(strMd5))
 	headers[DATE] = time.Now().UTC().Format(http.TimeFormat)
 
-	if p.credential.GetSecurityToken() != "" {
-		headers[SECURITY_TOKEN] = p.credential.GetSecurityToken()
-	}
-	if authHeader, e := p.authorization(method, headers, fmt.Sprintf("/%s", resource)); e != nil {
-		err = ERR_GENERAL_AUTH_HEADER_FAILED.New(errors.Params{"err": e})
+	credential, err := p.credential.GetCredential()
+	if err != nil {
 		return nil, err
-	} else {
-		headers[AUTHORIZATION] = authHeader
 	}
+	if credential.SecurityToken != nil && *credential.SecurityToken != "" {
+		headers[SECURITY_TOKEN] = *credential.SecurityToken
+	}
+
+	signature, err := getSignature(method, headers, fmt.Sprintf("/%s", resource), *credential.AccessKeySecret)
+	if err != nil {
+		return nil, ERR_GENERAL_AUTH_HEADER_FAILED.New(errors.Params{"err": err})
+	}
+	headers[AUTHORIZATION] = fmt.Sprintf("MNS %s:%s", *credential.AccessKeyId, signature)
 
 	var buffer bytes.Buffer
 	buffer.WriteString(p.url.String())
