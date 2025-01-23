@@ -1,5 +1,9 @@
 # Change log
 
+## 1.0.7
+- Add an example of base64 encoding and decoding to queue_example.go.
+- Add support for dynamic credentials.
+
 ## 1.0.6
 - Added an example of HTTP endpoint subscription in `topic_example.go`.
 - Added an example of HTTP authorization in `http_authorization.go`.
