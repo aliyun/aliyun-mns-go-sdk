@@ -1,6 +1,6 @@
 # Aliyun MNS Go SDK
 
-[![Github version](https://badgen.net/badge/color/1.0.6/green?label=version)](https://badgen.net/badge/color/1.0.6/green?label=version)
+[![Github version](https://badgen.net/badge/color/1.0.7/green?label=version)](https://badgen.net/badge/color/1.0.7/green?label=version)
 
 Aliyun MNS Go SDK 是 MNS 在 Go 编译语言的官方 SDK
 
