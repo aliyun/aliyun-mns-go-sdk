@@ -12,7 +12,9 @@ import (
 type AliQueueManager interface {
 	CreateSimpleQueue(queueName string) (err error)
 	CreateQueue(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
+	CreateQueueWithOptions(queueName string, options ...QueueOption) (err error)
 	SetQueueAttributes(queueName string, delaySeconds int32, maxMessageSize int32, messageRetentionPeriod int32, visibilityTimeout int32, pollingWaitSeconds int32, slices int32) (err error)
+	SetQueueAttributesWithOptions(queueName string, options ...QueueOption) (err error)
 	GetQueueAttributes(queueName string) (attr QueueAttribute, err error)
 	DeleteQueue(queueName string) (err error)
 	ListQueue(nextMarker string, retNumber int32, prefix string) (queues Queues, err error)
@@ -22,6 +24,59 @@ type AliQueueManager interface {
 type MNSQueueManager struct {
 	cli     MNSClient
 	decoder MNSDecoder
+}
+
+type QueueOptions struct {
+	delaySeconds           int32
+	maxMessageSize         int32
+	messageRetentionPeriod int32
+	visibilityTimeout      int32
+	pollingWaitSeconds     int32
+	loggingEnabled         bool
+}
+
+type QueueOption func(*QueueOptions, map[string]bool)
+
+func WithDelaySeconds(delay int32) QueueOption {
+	return func(o *QueueOptions, tracker map[string]bool) {
+		o.delaySeconds = delay
+		tracker["delaySeconds"] = true
+	}
+}
+
+func WithMaxMessageSize(size int32) QueueOption {
+	return func(o *QueueOptions, tracker map[string]bool) {
+		o.maxMessageSize = size
+		tracker["maxMessageSize"] = true
+	}
+}
+
+func WithMessageRetentionPeriod(period int32) QueueOption {
+	return func(o *QueueOptions, tracker map[string]bool) {
+		o.messageRetentionPeriod = period
+		tracker["messageRetentionPeriod"] = true
+	}
+}
+
+func WithVisibilityTimeout(timeout int32) QueueOption {
+	return func(o *QueueOptions, tracker map[string]bool) {
+		o.visibilityTimeout = timeout
+		tracker["visibilityTimeout"] = true
+	}
+}
+
+func WithPollingWaitSeconds(seconds int32) QueueOption {
+	return func(o *QueueOptions, tracker map[string]bool) {
+		o.pollingWaitSeconds = seconds
+		tracker["pollingWaitSeconds"] = true
+	}
+}
+
+func WithLoggingEnabled(enabled bool) QueueOption {
+	return func(o *QueueOptions, tracker map[string]bool) {
+		o.loggingEnabled = enabled
+		tracker["loggingEnabled"] = true
+	}
 }
 
 func checkQueueName(queueName string) (err error) {
@@ -111,11 +166,47 @@ func (p *MNSQueueManager) CreateQueue(queueName string, delaySeconds int32, maxM
 		MessageRetentionPeriod: messageRetentionPeriod,
 		VisibilityTimeout:      visibilityTimeout,
 		PollingWaitSeconds:     pollingWaitSeconds,
+		LoggingEnabled:         false,
 	}
 
 	var code int
 	code, err = send(p.cli, p.decoder, PUT, nil, &message, "queues/"+queueName, nil)
 
+	if code == http.StatusNoContent {
+		err = ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.New(errors.Params{"name": queueName})
+		return
+	}
+
+	return
+}
+
+func (p *MNSQueueManager) CreateQueueWithOptions(queueName string, options ...QueueOption) (err error) {
+	queueName = strings.TrimSpace(queueName)
+	if err = checkQueueName(queueName); err != nil {
+		return
+	}
+	opts := defaultQueueOptions()
+	tracker := make(map[string]bool)
+	for _, opt := range options {
+		opt(&opts, tracker)
+	}
+
+	if err = checkAttributes(opts.delaySeconds, opts.messageRetentionPeriod,
+		opts.visibilityTimeout, opts.pollingWaitSeconds); err != nil {
+		return
+	}
+
+	message := CreateQueueRequest{
+		DelaySeconds:           opts.delaySeconds,
+		MaxMessageSize:         opts.maxMessageSize,
+		MessageRetentionPeriod: opts.messageRetentionPeriod,
+		VisibilityTimeout:      opts.visibilityTimeout,
+		PollingWaitSeconds:     opts.pollingWaitSeconds,
+		LoggingEnabled:         opts.loggingEnabled,
+	}
+
+	var code int
+	code, err = send(p.cli, p.decoder, PUT, nil, &message, "queues/"+queueName, nil)
 	if code == http.StatusNoContent {
 		err = ERR_MNS_QUEUE_ALREADY_EXIST_AND_HAVE_SAME_ATTR.New(errors.Params{"name": queueName})
 		return
@@ -144,6 +235,58 @@ func (p *MNSQueueManager) SetQueueAttributes(queueName string, delaySeconds int3
 		MessageRetentionPeriod: messageRetentionPeriod,
 		VisibilityTimeout:      visibilityTimeout,
 		PollingWaitSeconds:     pollingWaitSeconds,
+	}
+
+	_, err = send(p.cli, p.decoder, PUT, nil, &message, fmt.Sprintf("queues/%s?metaoverride=true", queueName), nil)
+	return
+}
+
+func (p *MNSQueueManager) SetQueueAttributesWithOptions(queueName string, options ...QueueOption) (err error) {
+	queueName = strings.TrimSpace(queueName)
+	if err = checkQueueName(queueName); err != nil {
+		return
+	}
+	opts := QueueOptions{}
+	tracker := make(map[string]bool)
+	for _, opt := range options {
+		opt(&opts, tracker)
+	}
+
+	message := CreateQueueRequest{}
+	if tracker["delaySeconds"] {
+		if err = checkDelaySeconds(opts.delaySeconds); err != nil {
+			return
+		}
+		message.DelaySeconds = opts.delaySeconds
+	}
+
+	if tracker["maxMessageSize"] {
+		message.MaxMessageSize = opts.maxMessageSize
+	}
+
+	if tracker["messageRetentionPeriod"] {
+		if err = checkMessageRetentionPeriod(opts.messageRetentionPeriod); err != nil {
+			return
+		}
+		message.MessageRetentionPeriod = opts.messageRetentionPeriod
+	}
+
+	if tracker["visibilityTimeout"] {
+		if err = checkVisibilityTimeout(opts.visibilityTimeout); err != nil {
+			return
+		}
+		message.VisibilityTimeout = opts.visibilityTimeout
+	}
+
+	if tracker["pollingWaitSeconds"] {
+		if err = checkPollingWaitSeconds(opts.pollingWaitSeconds); err != nil {
+			return
+		}
+		message.PollingWaitSeconds = opts.pollingWaitSeconds
+	}
+
+	if tracker["loggingEnabled"] {
+		message.LoggingEnabled = opts.loggingEnabled
 	}
 
 	_, err = send(p.cli, p.decoder, PUT, nil, &message, fmt.Sprintf("queues/%s?metaoverride=true", queueName), nil)
@@ -234,4 +377,15 @@ func (p *MNSQueueManager) ListQueueDetail(nextMarker string, retNumber int32, pr
 	_, err = send(p.cli, p.decoder, GET, header, nil, "queues", &queueDetails)
 
 	return
+}
+
+func defaultQueueOptions() QueueOptions {
+	return QueueOptions{
+		delaySeconds:           0,
+		maxMessageSize:         65536,
+		messageRetentionPeriod: 345600,
+		visibilityTimeout:      30,
+		pollingWaitSeconds:     0,
+		loggingEnabled:         false,
+	}
 }

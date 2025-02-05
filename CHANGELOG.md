@@ -1,5 +1,8 @@
 # Change log
 
+## 1.0.8
+- Support configuring the logEnable parameter for queues during creation and attribute setting.
+
 ## 1.0.7
 - Add an example of base64 encoding and decoding to queue_example.go.
 - Add support for dynamic credentials.
