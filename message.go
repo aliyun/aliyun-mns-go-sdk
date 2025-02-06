@@ -170,6 +170,7 @@ type CreateQueueRequest struct {
 	MessageRetentionPeriod int32    `xml:"MessageRetentionPeriod,omitempty" json:"message_retention_period,omitempty"`
 	VisibilityTimeout      int32    `xml:"VisibilityTimeout,omitempty" json:"visibility_timeout,omitempty"`
 	PollingWaitSeconds     int32    `xml:"PollingWaitSeconds" json:"polling_wait_secods"`
+	LoggingEnabled         bool     `xml:"LoggingEnabled" json:"logging_enabled"`
 }
 
 type CreateTopicRequest struct {
@@ -217,6 +218,7 @@ type QueueAttribute struct {
 	DelayMessages          int64    `xml:"DelayMessages,omitempty" json:"delay_messages,omitempty"`
 	CreateTime             int64    `xml:"CreateTime,omitempty" json:"create_time,omitempty"`
 	LastModifyTime         int64    `xml:"LastModifyTime,omitempty" json:"last_modify_time,omitempty"`
+	LoggingEnabled         bool     `xml:"LoggingEnabled" json:"logging_enabled"`
 }
 
 type TopicAttribute struct {
