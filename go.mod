@@ -3,7 +3,7 @@ module github.com/aliyun/aliyun-mns-go-sdk
 go 1.20
 
 require (
-	github.com/aliyun/credentials-go v1.3.2
+	github.com/aliyun/credentials-go v1.3.10
 	github.com/gogap/errors v0.0.0-20210818113853-edfbba0ddea9
 	github.com/gogap/logs v0.0.0-20150329044033-31c6d1e28b2c
 	github.com/valyala/fasthttp v1.52.0
