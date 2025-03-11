@@ -143,13 +143,29 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 	cli.Timeout = clientConfig.TimeoutSecond
 	if clientConfig.Credential != nil {
 		cli.credential = clientConfig.Credential
+	} else if clientConfig.Token != "" {
+		config := new(credentials.Config).
+			SetType("sts").
+			SetAccessKeyId(clientConfig.AccessKeyId).
+			SetAccessKeySecret(clientConfig.AccessKeySecret).
+			SetSecurityToken(clientConfig.Token)
+		var err error
+		cli.credential, err = credentials.NewCredential(config)
+		if err != nil {
+			panic(err)
+		}
 	} else {
-		cli.credential = &credentials.StsTokenCredential{
-			AccessKeyId:     clientConfig.AccessKeyId,
-			AccessKeySecret: clientConfig.AccessKeySecret,
-			SecurityToken:   clientConfig.Token,
+		config := new(credentials.Config).
+			SetType("access_key").
+			SetAccessKeyId(clientConfig.AccessKeyId).
+			SetAccessKeySecret(clientConfig.AccessKeySecret)
+		var err error
+		cli.credential, err = credentials.NewCredential(config)
+		if err != nil {
+			panic(err)
 		}
 	}
+
 	if clientConfig.MaxConnsPerHost != 0 {
 		cli.MaxConnsPerHost = clientConfig.MaxConnsPerHost
 	} else {

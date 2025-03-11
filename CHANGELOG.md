@@ -1,5 +1,8 @@
 # Change log
 
+## 1.0.9
+- Fix the error [issue#26](https://github.com/aliyun/aliyun-mns-go-sdk/issues/26) where the StsTokenCredential component in the credentials package does not exist.
+
 ## 1.0.8
 - Support configuring the logEnable parameter for queues during creation and attribute setting.
 
