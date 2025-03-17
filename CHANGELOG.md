@@ -1,5 +1,8 @@
 # Change log
 
+## 1.0.10
+- Resolved the issue where the region information check failed during resource creation for endpoints with the suffix `-control`.
+
 ## 1.0.9
 - Fix the error [issue#26](https://github.com/aliyun/aliyun-mns-go-sdk/issues/26) where the StsTokenCredential component in the credentials package does not exist.
 

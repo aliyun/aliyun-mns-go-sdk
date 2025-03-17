@@ -9,6 +9,7 @@ import (
 	"net/http"
 	neturl "net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -185,7 +186,8 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 
 	accountIdSlice := strings.Split(pieces[0], "/")
 	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
-	regionSlice := strings.Split(pieces[2], "-internal")
+	re := regexp.MustCompile("-(internal|control)")
+	regionSlice := re.Split(pieces[2], -1)
 	cli.region = regionSlice[0]
 	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
 		cli.proxyURL = globalUrl
