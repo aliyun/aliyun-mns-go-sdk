@@ -1,6 +1,6 @@
 # Aliyun MNS Go SDK
 
-[![Github version](https://badgen.net/badge/color/1.0.10/green?label=version)](https://badgen.net/badge/color/1.0.10/green?label=version)
+[![Github version](https://badgen.net/badge/color/1.0.11/green?label=version)](https://badgen.net/badge/color/1.0.11/green?label=version)
 
 The Aliyun MNS Go SDK is the official SDK for MNS in the Go programming language
 
