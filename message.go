@@ -213,12 +213,15 @@ type QueueAttribute struct {
 	MessageRetentionPeriod int32    `xml:"MessageRetentionPeriod,omitempty" json:"message_retention_period,omitempty"`
 	VisibilityTimeout      int32    `xml:"VisibilityTimeout,omitempty" json:"visibility_timeout,omitempty"`
 	PollingWaitSeconds     int32    `xml:"PollingWaitSeconds,omitempty" json:"polling_wait_secods,omitempty"`
-	ActiveMessages         int64    `xml:"ActiveMessages,omitempty" json:"active_messages,omitempty"`
-	InactiveMessages       int64    `xml:"InactiveMessages,omitempty" json:"inactive_messages,omitempty"`
-	DelayMessages          int64    `xml:"DelayMessages,omitempty" json:"delay_messages,omitempty"`
-	CreateTime             int64    `xml:"CreateTime,omitempty" json:"create_time,omitempty"`
-	LastModifyTime         int64    `xml:"LastModifyTime,omitempty" json:"last_modify_time,omitempty"`
-	LoggingEnabled         bool     `xml:"LoggingEnabled" json:"logging_enabled"`
+	// Deprecated: ActiveMessages即将下线，将在后续版本中移除，请关注官方文档更新
+	ActiveMessages int64 `xml:"ActiveMessages" json:"active_messages"`
+	// Deprecated: InactiveMessages即将下线，将在后续版本中移除，请关注官方文档更新
+	InactiveMessages int64 `xml:"InactiveMessages" json:"inactive_messages"`
+	// Deprecated: DelayMessages即将下线，将在后续版本中移除，请关注官方文档更新
+	DelayMessages  int64 `xml:"DelayMessages" json:"delay_messages"`
+	CreateTime     int64 `xml:"CreateTime,omitempty" json:"create_time,omitempty"`
+	LastModifyTime int64 `xml:"LastModifyTime,omitempty" json:"last_modify_time,omitempty"`
+	LoggingEnabled bool  `xml:"LoggingEnabled" json:"logging_enabled"`
 }
 
 type TopicAttribute struct {
