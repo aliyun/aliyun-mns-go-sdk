@@ -1,5 +1,8 @@
 # Change log
 
+## 1.0.11
+- Updated version number to 1.0.11 with no other changes.
+
 ## 1.0.10
 - Resolved the issue where the region information check failed during resource creation for endpoints with the suffix `-control`.
 
