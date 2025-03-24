@@ -13,7 +13,7 @@ func send(client MNSClient, decoder MNSDecoder, method Method, headers map[strin
 	if resp, err = client.Send(method, headers, message, resource); err != nil {
 		return
 	}
-
+	defer fasthttp.ReleaseResponse(resp)
 	if resp != nil {
 		statusCode = resp.Header.StatusCode()
 

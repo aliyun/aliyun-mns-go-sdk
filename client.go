@@ -299,6 +299,7 @@ func (p *aliMNSClient) Send(method Method, headers map[string]string, message in
 
 	req := fasthttp.AcquireRequest()
 
+	defer fasthttp.ReleaseRequest(req)
 	req.SetRequestURI(url)
 	req.Header.SetMethod(string(method))
 	req.SetBody(xmlContent)
