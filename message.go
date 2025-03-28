@@ -212,7 +212,7 @@ type QueueAttribute struct {
 	MaxMessageSize         int32    `xml:"MaximumMessageSize,omitempty" json:"maximum_message_size,omitempty"`
 	MessageRetentionPeriod int32    `xml:"MessageRetentionPeriod,omitempty" json:"message_retention_period,omitempty"`
 	VisibilityTimeout      int32    `xml:"VisibilityTimeout,omitempty" json:"visibility_timeout,omitempty"`
-	PollingWaitSeconds     int32    `xml:"PollingWaitSeconds,omitempty" json:"polling_wait_secods,omitempty"`
+	PollingWaitSeconds     int32    `xml:"PollingWaitSeconds,omitempty" json:"polling_wait_seconds,omitempty"`
 	// Deprecated: ActiveMessages即将下线，将在后续版本中移除，请关注官方文档更新
 	ActiveMessages int64 `xml:"ActiveMessages" json:"active_messages"`
 	// Deprecated: InactiveMessages即将下线，将在后续版本中移除，请关注官方文档更新
