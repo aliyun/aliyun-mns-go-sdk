@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/aliyun/aliyun-mns-go-sdk"
@@ -15,7 +16,10 @@ func main() {
 	topicName := "test-topic"
 	queueSubName := "test-sub-queue"
 	httpSubName := "test-sub-http"
-	client := ali_mns.NewClient(endpoint)
+	client, e := ali_mns.NewClient(endpoint)
+	if e != nil {
+		log.Fatal(e)
+	}
 
 	// 1. create a queue for receiving pushed messages
 	queueManager := ali_mns.NewMNSQueueManager(client)
@@ -34,7 +38,10 @@ func main() {
 		return
 	}
 
-	topic := ali_mns.NewMNSTopic(topicName, client)
+	topic, err := ali_mns.NewMNSTopic(topicName, client)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// 3. subscribe to topic, the endpoint is queue
 	queueSub := ali_mns.MessageSubsribeRequest{
 		Endpoint:            topic.GenerateQueueEndpoint(queueName),
@@ -94,7 +101,10 @@ func main() {
 	}
 
 	// 6. receive the message from queue
-	queue := ali_mns.NewMNSQueue(queueName, client)
+	queue, err := ali_mns.NewMNSQueue(queueName, client)
+	if err != nil {
+		log.Fatal(err)
+	}
 	endChan := make(chan int)
 	respChan := make(chan ali_mns.MessageReceiveResponse)
 	errChan := make(chan error)
