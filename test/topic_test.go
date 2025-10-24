@@ -10,7 +10,12 @@ import (
 func TestNewMNSTopic_ErrorCases(t *testing.T) {
 	// 创建一个模拟的MNSClient用于测试
 	endpoint := "http://1234567890123456.mns.cn-hangzhou.aliyuncs.com"
-	client, _ := ali_mns.NewClient(endpoint)
+	config := ali_mns.AliMNSClientConfig{
+			EndPoint:        endpoint,
+			AccessKeyId:     "test-access-key-id",
+			AccessKeySecret: "test-access-key-secret",
+		}
+	client, _ := ali_mns.NewAliMNSClientWithConfig(config)	
 
 	t.Run("Empty topic name should return error", func(t *testing.T) {
 		topic, err := ali_mns.NewMNSTopic("", client)
