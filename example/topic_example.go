@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"time"
-
+	"os"
 	"github.com/aliyun/aliyun-mns-go-sdk"
 	"github.com/gogap/logs"
 )
@@ -16,7 +16,14 @@ func main() {
 	topicName := "test-topic"
 	queueSubName := "test-sub-queue"
 	httpSubName := "test-sub-http"
-	client, e := ali_mns.NewClient(endpoint)
+	// 0. create a client with endpoint or config
+	// client, e := ali_mns.NewClient(endpoint)
+	client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
+		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		Region:           "cn-hangzhou",
+	})
 	if e != nil {
 		log.Fatal(e)
 	}

@@ -66,8 +66,8 @@ type MNSClient interface {
 	Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error)
 	SetProxy(url string)
 	SetTransport(transport fasthttp.RoundTripper)
-	getAccountId() (accountId string)
-	getRegion() (region string)
+	GetAccountId() (accountId string)
+	GetRegion() (region string)
 }
 
 type aliMNSClient struct {
@@ -91,6 +91,7 @@ type AliMNSClientConfig struct {
 	Credential      credentials.Credential
 	TimeoutSecond   int64
 	MaxConnsPerHost int
+	Region			string
 }
 
 // NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
@@ -187,9 +188,15 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 
 	accountIdSlice := strings.Split(pieces[0], "/")
 	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
-	re := regexp.MustCompile("-(internal|control)")
-	regionSlice := re.Split(pieces[2], -1)
-	cli.region = regionSlice[0]
+	
+	if clientConfig.Region != "" {
+		cli.region = clientConfig.Region
+	} else {
+		re := regexp.MustCompile("-(internal|control)")
+		regionSlice := re.Split(pieces[2], -1)
+		cli.region = regionSlice[0]
+	}
+
 	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
 		cli.proxyURL = globalUrl
 	}
@@ -201,11 +208,11 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 	return cli, nil
 }
 
-func (p aliMNSClient) getAccountId() (accountId string) {
+func (p aliMNSClient) GetAccountId() (accountId string) {
 	return p.accountId
 }
 
-func (p aliMNSClient) getRegion() (region string) {
+func (p aliMNSClient) GetRegion() (region string) {
 	return p.region
 }
 

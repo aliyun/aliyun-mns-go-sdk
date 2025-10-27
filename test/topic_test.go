@@ -81,3 +81,87 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 		}
 	})
 }
+
+func TestAliMNSClientConfig_Region(t *testing.T) {
+	endpoint := "http://1234567890123456.mns.cn-hangzhou.aliyuncs.com"
+	
+	t.Run("Region from endpoint when not explicitly set", func(t *testing.T) {
+		config := ali_mns.AliMNSClientConfig{
+			EndPoint:        endpoint,
+			AccessKeyId:     "test-access-key-id",
+			AccessKeySecret: "test-access-key-secret",
+		}
+		
+		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		if err != nil {
+			t.Fatalf("Failed to create client: %v", err)
+		}
+		
+		expectedRegion := "cn-hangzhou"
+		actualRegion := client.GetRegion()
+		if actualRegion != expectedRegion {
+			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
+		}
+	})
+	
+	t.Run("Explicitly set region overrides parsed region", func(t *testing.T) {
+		config := ali_mns.AliMNSClientConfig{
+			EndPoint:        endpoint,
+			AccessKeyId:     "test-access-key-id",
+			AccessKeySecret: "test-access-key-secret",
+			Region:          "cn-beijing", // Explicitly set different region
+		}
+		
+		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		if err != nil {
+			t.Fatalf("Failed to create client: %v", err)
+		}
+		
+		expectedRegion := "cn-beijing"
+		actualRegion := client.GetRegion()
+		if actualRegion != expectedRegion {
+			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
+		}
+	})
+	
+	t.Run("Explicitly set region with internal endpoint", func(t *testing.T) {
+		internalEndpoint := "http://1234567890123456.mns.cn-hangzhou-internal.aliyuncs.com"
+		config := ali_mns.AliMNSClientConfig{
+			EndPoint:        internalEndpoint,
+			AccessKeyId:     "test-access-key-id",
+			AccessKeySecret: "test-access-key-secret",
+			Region:          "cn-shanghai", // Explicitly set region
+		}
+		
+		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		if err != nil {
+			t.Fatalf("Failed to create client: %v", err)
+		}
+		
+		expectedRegion := "cn-shanghai"
+		actualRegion := client.GetRegion()
+		if actualRegion != expectedRegion {
+			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
+		}
+	})
+	
+	t.Run("Empty region falls back to parsing from endpoint", func(t *testing.T) {
+		config := ali_mns.AliMNSClientConfig{
+			EndPoint:        endpoint,
+			AccessKeyId:     "test-access-key-id",
+			AccessKeySecret: "test-access-key-secret",
+			Region:          "", // Empty region
+		}
+		
+		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		if err != nil {
+			t.Fatalf("Failed to create client: %v", err)
+		}
+		
+		expectedRegion := "cn-hangzhou"
+		actualRegion := client.GetRegion()
+		if actualRegion != expectedRegion {
+			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
+		}
+	})
+}

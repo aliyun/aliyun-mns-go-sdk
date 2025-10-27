@@ -55,7 +55,7 @@ func (p *MNSTopic) Name() string {
 }
 
 func (p *MNSTopic) GenerateQueueEndpoint(queueName string) string {
-	return "acs:mns:" + p.client.getRegion() + ":" + p.client.getAccountId() + ":queues/" + queueName
+	return "acs:mns:" + p.client.GetRegion() + ":" + p.client.GetAccountId() + ":queues/" + queueName
 }
 
 func (p *MNSTopic) GenerateMailEndpoint(mailAddress string) string {
