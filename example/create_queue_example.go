@@ -3,15 +3,19 @@ package main
 import (
 	"fmt"
 	ali_mns "github.com/aliyun/aliyun-mns-go-sdk"
+	"log"
 	"time"
 )
 
 func main() {
 	// Replace with your own endpoint.
 	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
-	client := ali_mns.NewClient(endpoint)
+	client, e := ali_mns.NewClient(endpoint)
+	if e != nil {
+		log.Fatal(e)
+	}
 	queueManager := ali_mns.NewMNSQueueManager(client)
-	queueName := "test-queue"
+	queueName := "go-test-queue"
 	err := queueManager.CreateQueueWithOptions(queueName,
 		ali_mns.WithDelaySeconds(5),
 		ali_mns.WithMaxMessageSize(1024),

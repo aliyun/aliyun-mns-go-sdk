@@ -31,9 +31,9 @@ type MNSQueue struct {
 	qpsMonitor *QPSMonitor
 }
 
-func NewMNSQueue(name string, client MNSClient, qps ...int32) AliMNSQueue {
+func NewMNSQueue(name string, client MNSClient, qps ...int32) (AliMNSQueue, error) {
 	if name == "" {
-		panic("ali_mns: queue name could not be empty")
+		return nil, fmt.Errorf("ali_mns: queue name could not be empty")
 	}
 
 	queue := new(MNSQueue)
@@ -46,7 +46,7 @@ func NewMNSQueue(name string, client MNSClient, qps ...int32) AliMNSQueue {
 		qpsLimit = qps[0]
 	}
 	queue.qpsMonitor = NewQPSMonitor(5, qpsLimit)
-	return queue
+	return queue, nil
 }
 
 func (p *MNSQueue) QPSMonitor() *QPSMonitor {

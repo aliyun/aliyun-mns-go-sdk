@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"net/http"
 	neturl "net/url"
 	"os"
@@ -94,13 +95,13 @@ type AliMNSClientConfig struct {
 
 // NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClient(endpoint string) MNSClient {
+func NewClient(endpoint string) (MNSClient, error) {
 	return NewClientWithToken(endpoint, "")
 }
 
 // NewClientWithToken Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClientWithToken(endpoint, token string) MNSClient {
+func NewClientWithToken(endpoint, token string) (MNSClient, error) {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        endpoint,
 		AccessKeyId:     os.Getenv(AliyunAkEnvKey),
@@ -112,7 +113,7 @@ func NewClientWithToken(endpoint, token string) MNSClient {
 }
 
 // Deprecated: Use NewClient instead.
-func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
+func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) (MNSClient, error) {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
 		AccessKeyId:     accessKeyId,
@@ -124,7 +125,7 @@ func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 }
 
 // Deprecated: Use NewClientWithToken instead.
-func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
+func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) (MNSClient, error) {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
 		AccessKeyId:     accessKeyId,
@@ -135,9 +136,9 @@ func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token stri
 	})
 }
 
-func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
+func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, error) {
 	if clientConfig.EndPoint == "" {
-		panic("ali-mns: message queue url is empty")
+		return nil, fmt.Errorf("ali-mns: message queue url is empty")
 	}
 
 	cli := new(aliMNSClient)
@@ -153,7 +154,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 		var err error
 		cli.credential, err = credentials.NewCredential(config)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	} else {
 		config := new(credentials.Config).
@@ -163,7 +164,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 		var err error
 		cli.credential, err = credentials.NewCredential(config)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -175,13 +176,13 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 
 	var err error
 	if cli.url, err = neturl.Parse(clientConfig.EndPoint); err != nil {
-		panic("err parse url")
+		log.Fatal("err parse url")
 	}
 
 	// 1. parse region and accountId
 	pieces := strings.Split(clientConfig.EndPoint, ".")
 	if len(pieces) != 5 {
-		panic("ali-mns: message queue url is invalid")
+		log.Fatal("ali-mns: message queue url is invalid")
 	}
 
 	accountIdSlice := strings.Split(pieces[0], "/")
@@ -197,7 +198,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
 	cli.initFastHttpClient()
 	//change to dial dual stack to support both ipv4 and ipv6
 	cli.client.DialDualStack = true
-	return cli
+	return cli, nil
 }
 
 func (p aliMNSClient) getAccountId() (accountId string) {
