@@ -94,7 +94,6 @@ type AliMNSClientConfig struct {
 }
 
 type ClientOptions struct {
-	// Region 指定客户端的区域。如果未设置，将从 EndPoint 自动解析
 	Region			string
 }
 
