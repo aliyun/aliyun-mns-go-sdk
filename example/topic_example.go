@@ -10,11 +10,11 @@ import (
 
 func main() {
 	// Replace with your own endpoint.
-	endpoint := "http://1202283709788407.mns.cn-hangzhou.aliyuncs.com"
-	queueName := "test-queue-3"
-	topicName := "test-topic3"
-	queueSubName := "test-sub-queue3"
-	httpSubName := "test-sub-http3"
+	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	queueName := "test-queue"
+	topicName := "test-topic"
+	queueSubName := "test-sub-queue"
+	httpSubName := "test-sub-http"
 	// 0 create a client with endpoint
 	// client, e := ali_mns.NewClient(endpoint)
 
