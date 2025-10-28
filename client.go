@@ -91,18 +91,22 @@ type AliMNSClientConfig struct {
 	Credential      credentials.Credential
 	TimeoutSecond   int64
 	MaxConnsPerHost int
+}
+
+type ClientOptions struct {
+	// Region 指定客户端的区域。如果未设置，将从 EndPoint 自动解析
 	Region			string
 }
 
 // NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClient(endpoint string) (MNSClient, error) {
+func NewClient(endpoint string) MNSClient {
 	return NewClientWithToken(endpoint, "")
 }
 
 // NewClientWithToken Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClientWithToken(endpoint, token string) (MNSClient, error) {
+func NewClientWithToken(endpoint, token string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        endpoint,
 		AccessKeyId:     os.Getenv(AliyunAkEnvKey),
@@ -114,7 +118,7 @@ func NewClientWithToken(endpoint, token string) (MNSClient, error) {
 }
 
 // Deprecated: Use NewClient instead.
-func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) (MNSClient, error) {
+func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
 		AccessKeyId:     accessKeyId,
@@ -126,7 +130,7 @@ func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) (MNSClient, 
 }
 
 // Deprecated: Use NewClientWithToken instead.
-func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) (MNSClient, error) {
+func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        inputUrl,
 		AccessKeyId:     accessKeyId,
@@ -137,7 +141,11 @@ func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token stri
 	})
 }
 
-func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, error) {
+func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
+	return NewAliMNSClientWithConfigAndOptions(clientConfig, nil)
+}
+
+func newAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) (*aliMNSClient, error) {
 	if clientConfig.EndPoint == "" {
 		return nil, fmt.Errorf("ali-mns: message queue url is empty")
 	}
@@ -155,7 +163,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 		var err error
 		cli.credential, err = credentials.NewCredential(config)
 		if err != nil {
-			log.Fatal(err)
+			return nil, fmt.Errorf("failed to create sts credential: %w", err)
 		}
 	} else {
 		config := new(credentials.Config).
@@ -165,7 +173,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 		var err error
 		cli.credential, err = credentials.NewCredential(config)
 		if err != nil {
-			log.Fatal(err)
+			return nil, fmt.Errorf("failed to create access key credential: %w", err)
 		}
 	}
 
@@ -177,20 +185,20 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 
 	var err error
 	if cli.url, err = neturl.Parse(clientConfig.EndPoint); err != nil {
-		log.Fatal("err parse url")
+		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
 
 	// 1. parse region and accountId
 	pieces := strings.Split(clientConfig.EndPoint, ".")
 	if len(pieces) != 5 {
-		log.Fatal("ali-mns: message queue url is invalid")
+		return nil, fmt.Errorf("ali-mns: message queue url is invalid")
 	}
 
 	accountIdSlice := strings.Split(pieces[0], "/")
 	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
-	
-	if clientConfig.Region != "" {
-		cli.region = clientConfig.Region
+
+	if options != nil && options.Region != "" {
+		cli.region = options.Region
 	} else {
 		re := regexp.MustCompile("-(internal|control)")
 		regionSlice := re.Split(pieces[2], -1)
@@ -205,7 +213,21 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 	cli.initFastHttpClient()
 	//change to dial dual stack to support both ipv4 and ipv6
 	cli.client.DialDualStack = true
+	
 	return cli, nil
+}
+
+func NewAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) MNSClient {
+	client, err := newAliMNSClientWithConfigAndOptions(clientConfig, options)
+	if err != nil {
+		// If you need to handle errors, you should use the NewalimSclientwithConfigurandoption SwitherError function.
+		log.Fatal(err)
+	}
+	return client
+}
+
+func NewAliMNSClientWithConfigAndOptionsWithError(clientConfig AliMNSClientConfig, options *ClientOptions) (MNSClient, error) {
+	return newAliMNSClientWithConfigAndOptions(clientConfig, options)
 }
 
 func (p aliMNSClient) GetAccountId() (accountId string) {

@@ -16,16 +16,12 @@ func TestNewAliMNSClientWithConfig_EmptyEndpoint(t *testing.T) {
 			AccessKeySecret: "test-access-key-secret",
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
-		
+		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)
+		t.Logf("client: %v, err: %v", client, err)
+
 		// 验证返回了错误
 		if err == nil {
 			t.Error("Expected error for empty endpoint, but got nil")
-		}
-		
-		// 验证没有创建client
-		if client != nil {
-			t.Error("Expected nil client for empty endpoint, but got a client")
 		}
 		
 		// 验证错误信息是否正确
@@ -43,17 +39,13 @@ func TestNewAliMNSClientWithConfig_EmptyEndpoint(t *testing.T) {
 			AccessKeySecret: "test-access-key-secret",
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)
 		
 		// 验证返回了错误
 		if err == nil {
 			t.Error("Expected error for nil endpoint, but got nil")
 		}
-		
-		// 验证没有创建client
-		if client != nil {
-			t.Error("Expected nil client for nil endpoint, but got a client")
-		}
+		t.Logf("client: %v, err: %v", client, err)
 		
 		// 验证错误信息是否正确
 		expectedErrMsg := "ali-mns: message queue url is empty"

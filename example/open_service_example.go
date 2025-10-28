@@ -8,10 +8,7 @@ import (
 func main() {
 	// Replace with your own endpoint.
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
-	client, err := ali_mns.NewClient(endpoint)
-	if err != nil {
-		fmt.Println(err)
-	}
+	client := ali_mns.NewClient(endpoint)
 	if resp, err := ali_mns.NewAccountManager(client).OpenService(); err != nil {
 		fmt.Println(err)
 	} else {

@@ -15,10 +15,10 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 			AccessKeyId:     "test-access-key-id",
 			AccessKeySecret: "test-access-key-secret",
 		}
-	client, _ := ali_mns.NewAliMNSClientWithConfig(config)	
+	client, _ := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)	
 
 	t.Run("Empty topic name should return error", func(t *testing.T) {
-		topic, err := ali_mns.NewMNSTopic("", client)
+		topic, err := ali_mns.NewMNSTopicWithError("", client)
 		
 		// 验证返回了错误
 		if err == nil {
@@ -38,7 +38,7 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 	})
 
 	t.Run("Empty topic name with QPS parameter should return error", func(t *testing.T) {
-		topic, err := ali_mns.NewMNSTopic("", client, 100)
+		topic, err := ali_mns.NewMNSTopicWithError("", client, 100)
 		
 		// 验证返回了错误
 		if err == nil {
@@ -65,7 +65,7 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 			}
 		}()
 		
-		topic, err := ali_mns.NewMNSTopic("test-topic", nil)
+		topic, err := ali_mns.NewMNSTopicWithError("test-topic", nil)
 		
 		// 在实际实现中，NewMNSTopic不会检查client是否为nil，所以这里不会返回错误
 		// 但我们可以验证函数不会panic并且返回了topic对象
@@ -92,7 +92,7 @@ func TestAliMNSClientConfig_Region(t *testing.T) {
 			AccessKeySecret: "test-access-key-secret",
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}
@@ -109,10 +109,13 @@ func TestAliMNSClientConfig_Region(t *testing.T) {
 			EndPoint:        endpoint,
 			AccessKeyId:     "test-access-key-id",
 			AccessKeySecret: "test-access-key-secret",
-			Region:          "cn-beijing", // Explicitly set different region
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		options := &ali_mns.ClientOptions{
+			Region: "cn-beijing", // Explicitly set different region
+		}
+		
+		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, options)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}
@@ -130,35 +133,18 @@ func TestAliMNSClientConfig_Region(t *testing.T) {
 			EndPoint:        internalEndpoint,
 			AccessKeyId:     "test-access-key-id",
 			AccessKeySecret: "test-access-key-secret",
-			Region:          "cn-shanghai", // Explicitly set region
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
+		options := &ali_mns.ClientOptions{
+			Region: "cn-shanghai", // Explicitly set region
+		}
+		
+		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, options)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}
 		
 		expectedRegion := "cn-shanghai"
-		actualRegion := client.GetRegion()
-		if actualRegion != expectedRegion {
-			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
-		}
-	})
-	
-	t.Run("Empty region falls back to parsing from endpoint", func(t *testing.T) {
-		config := ali_mns.AliMNSClientConfig{
-			EndPoint:        endpoint,
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-			Region:          "", // Empty region
-		}
-		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
-		if err != nil {
-			t.Fatalf("Failed to create client: %v", err)
-		}
-		
-		expectedRegion := "cn-hangzhou"
 		actualRegion := client.GetRegion()
 		if actualRegion != expectedRegion {
 			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)

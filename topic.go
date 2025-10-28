@@ -32,9 +32,9 @@ type MNSTopic struct {
 	qpsMonitor *QPSMonitor
 }
 
-func NewMNSTopic(name string, client MNSClient, qps ...int32) (AliMNSTopic, error) {
+func NewMNSTopic(name string, client MNSClient, qps ...int32) AliMNSTopic {
 	if name == "" {
-		return nil, fmt.Errorf("ali_mns: topic name could not be empty")
+		panic("ali_mns: topic name could not be empty")
 	}
 
 	topic := new(MNSTopic)
@@ -47,7 +47,25 @@ func NewMNSTopic(name string, client MNSClient, qps ...int32) (AliMNSTopic, erro
 		qpsLimit = qps[0]
 	}
 	topic.qpsMonitor = NewQPSMonitor(5, qpsLimit)
-	return topic, nil
+	return topic
+}
+
+func NewMNSTopicWithError(name string, client MNSClient, qps ...int32) (AliMNSTopic, error) {
+    if name == "" {
+        return nil, fmt.Errorf("ali_mns: topic name could not be empty")
+    }
+
+    topic := new(MNSTopic)
+    topic.client = client
+    topic.name = name
+    topic.decoder = NewAliMNSDecoder()
+
+    qpsLimit := DefaultTopicQPSLimit
+    if qps != nil && len(qps) == 1 && qps[0] > 0 {
+        qpsLimit = qps[0]
+    }
+    topic.qpsMonitor = NewQPSMonitor(5, qpsLimit)
+    return topic, nil
 }
 
 func (p *MNSTopic) Name() string {
