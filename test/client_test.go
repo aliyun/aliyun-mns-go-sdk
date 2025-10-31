@@ -16,7 +16,7 @@ func TestNewAliMNSClientWithConfig_EmptyEndpoint(t *testing.T) {
 			AccessKeySecret: "test-access-key-secret",
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)
+		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)
 		t.Logf("client: %v, err: %v", client, err)
 
 		// 验证返回了错误
@@ -39,7 +39,7 @@ func TestNewAliMNSClientWithConfig_EmptyEndpoint(t *testing.T) {
 			AccessKeySecret: "test-access-key-secret",
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)
+		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)
 		
 		// 验证返回了错误
 		if err == nil {

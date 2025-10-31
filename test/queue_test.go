@@ -15,9 +15,9 @@ func TestNewMNSQueue_ErrorCases(t *testing.T) {
 			AccessKeyId:     "test-access-key-id",
 			AccessKeySecret: "test-access-key-secret",
 		}
-	client, _ := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)	
+	client, _ := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)	
 	t.Run("Empty queue name should return error", func(t *testing.T) {
-		queue, err := ali_mns.NewMNSQueueWithError("", client)
+		queue, err := ali_mns.CreateMNSQueue("", client)
 		
 		// 验证返回了错误
 		if err == nil {
@@ -37,7 +37,7 @@ func TestNewMNSQueue_ErrorCases(t *testing.T) {
 	})
 
 	t.Run("Empty queue name with QPS parameter should return error", func(t *testing.T) {
-		queue, err := ali_mns.NewMNSQueueWithError("", client, 100)
+		queue, err := ali_mns.CreateMNSQueue("", client, 100)
 		
 		// 验证返回了错误
 		if err == nil {

@@ -15,10 +15,10 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 			AccessKeyId:     "test-access-key-id",
 			AccessKeySecret: "test-access-key-secret",
 		}
-	client, _ := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)	
+	client, _ := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)	
 
 	t.Run("Empty topic name should return error", func(t *testing.T) {
-		topic, err := ali_mns.NewMNSTopicWithError("", client)
+		topic, err := ali_mns.CreateMNSTopic("", client)
 		
 		// 验证返回了错误
 		if err == nil {
@@ -38,7 +38,7 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 	})
 
 	t.Run("Empty topic name with QPS parameter should return error", func(t *testing.T) {
-		topic, err := ali_mns.NewMNSTopicWithError("", client, 100)
+		topic, err := ali_mns.CreateMNSTopic("", client, 100)
 		
 		// 验证返回了错误
 		if err == nil {
@@ -65,7 +65,7 @@ func TestNewMNSTopic_ErrorCases(t *testing.T) {
 			}
 		}()
 		
-		topic, err := ali_mns.NewMNSTopicWithError("test-topic", nil)
+		topic, err := ali_mns.CreateMNSTopic("test-topic", nil)
 		
 		// 在实际实现中，NewMNSTopic不会检查client是否为nil，所以这里不会返回错误
 		// 但我们可以验证函数不会panic并且返回了topic对象
@@ -92,7 +92,7 @@ func TestAliMNSClientConfig_Region(t *testing.T) {
 			AccessKeySecret: "test-access-key-secret",
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, nil)
+		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}
@@ -115,7 +115,7 @@ func TestAliMNSClientConfig_Region(t *testing.T) {
 			Region: "cn-beijing", // Explicitly set different region
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, options)
+		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, options)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}
@@ -139,7 +139,7 @@ func TestAliMNSClientConfig_Region(t *testing.T) {
 			Region: "cn-shanghai", // Explicitly set region
 		}
 		
-		client, err := ali_mns.NewAliMNSClientWithConfigAndOptionsWithError(config, options)
+		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, options)
 		if err != nil {
 			t.Fatalf("Failed to create client: %v", err)
 		}

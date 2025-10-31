@@ -50,7 +50,7 @@ func NewMNSTopic(name string, client MNSClient, qps ...int32) AliMNSTopic {
 	return topic
 }
 
-func NewMNSTopicWithError(name string, client MNSClient, qps ...int32) (AliMNSTopic, error) {
+func CreateMNSTopic(name string, client MNSClient, qps ...int32) (AliMNSTopic, error) {
     if name == "" {
         return nil, fmt.Errorf("ali_mns: topic name could not be empty")
     }

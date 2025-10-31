@@ -219,13 +219,13 @@ func newAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, option
 func NewAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) MNSClient {
 	client, err := newAliMNSClientWithConfigAndOptions(clientConfig, options)
 	if err != nil {
-		// If you need to handle errors, you should use the NewalimSclientwithConfigurandoption SwitherError function.
+		// If you need to handle errors, you should use the CreateAliMNSClientWithConfigAndOptions.
 		log.Fatal(err)
 	}
 	return client
 }
 
-func NewAliMNSClientWithConfigAndOptionsWithError(clientConfig AliMNSClientConfig, options *ClientOptions) (MNSClient, error) {
+func CreateAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) (MNSClient, error) {
 	return newAliMNSClientWithConfigAndOptions(clientConfig, options)
 }
 

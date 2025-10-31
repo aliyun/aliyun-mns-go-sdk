@@ -49,7 +49,7 @@ func NewMNSQueue(name string, client MNSClient, qps ...int32) AliMNSQueue {
 	return queue
 }
 
-func NewMNSQueueWithError(name string, client MNSClient, qps ...int32) (AliMNSQueue, error) {
+func CreateMNSQueue(name string, client MNSClient, qps ...int32) (AliMNSQueue, error) {
     if name == "" {
         return nil, fmt.Errorf("ali_mns: queue name could not be empty")
     }
