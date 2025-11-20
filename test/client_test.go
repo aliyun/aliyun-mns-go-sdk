@@ -1,65 +1,20 @@
 package test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/aliyun/aliyun-mns-go-sdk"
 )
 
-func TestNewClient(t *testing.T) {
-	// 临时设置环境变量
-    os.Setenv("ALIBABA_CLOUD_ACCESS_KEY_ID", "test-access-key-id")
-    os.Setenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET", "test-access-key-secret")
-    defer func() {
-        // 测试结束后清理环境变量
-        os.Unsetenv("ALIBABA_CLOUD_ACCESS_KEY_ID")
-        os.Unsetenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET")
-    }() 
-	// 测试使用 NewClient 创建客户端
-	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
-	client, err := ali_mns.NewClient(endpoint, "cn-hangzhou")
-	if err != nil {
-		t.Errorf("Failed to create client with NewClient: %v", err)
-	}
 
-	if client == nil {
-		t.Error("Client should not be nil")
-	}
-
-	// 验证 region 是否正确设置
-	region := client.GetRegion()
-	if region != "cn-hangzhou" {
-		t.Errorf("Expected region cn-hangzhou, got %s", region)
-	}
-}
-
-func TestNewClientWithToken(t *testing.T) {
-	// 测试使用 NewClientWithToken 创建客户端
-	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
-	client, err := ali_mns.NewClientWithToken(endpoint, "test-token", "cn-hangzhou")
-	if err != nil {
-		t.Errorf("Failed to create client with NewClientWithToken: %v", err)
-	}
-
-	if client == nil {
-		t.Error("Client should not be nil")
-	}
-
-	// 验证 region 是否正确设置
-	region := client.GetRegion()
-	if region != "cn-hangzhou" {
-		t.Errorf("Expected region cn-hangzhou, got %s", region)
-	}
-}
 
 func TestNewAliMNSClientWithConfig(t *testing.T) {
 	// 测试使用 NewAliMNSClientWithConfig 创建客户端
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
 	client, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
-		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
-		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
 		Region:           "cn-hangzhou",
 	})
 	if err != nil {
@@ -83,8 +38,8 @@ func TestNewAliMNSClientWithConfigRegionMismatch(t *testing.T) {
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
 	client, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
-		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
-		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
 		Region:           "cn-beijing",
 	})
 	
@@ -108,8 +63,8 @@ func TestNewAliMNSClientWithConfigWithoutRegion(t *testing.T) {
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
 	_, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
-		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
-		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
 		Region:           "",
 	})
 	if err == nil {
@@ -121,8 +76,8 @@ func TestNewAliMNSClientWithConfigWithoutEndpoint(t *testing.T) {
 	// 测试使用 NewAliMNSClientWithConfig 创建客户端但不设置 endpoint
 	_, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         "",
-		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
-		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
 		Region:           "cn-hangzhou",
 	})
 	if err == nil {

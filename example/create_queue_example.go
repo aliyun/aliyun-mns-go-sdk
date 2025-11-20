@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Replace with your own endpoint.
-	endpoint := "http://1202283709788407.mns.cn-hangzhou.aliyuncs.com"
+	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
 	// client, error := ali_mns.NewClient(endpoint, "cn-hangzhou")
 	client, error := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,

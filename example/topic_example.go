@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Replace with your own endpoint.
-	endpoint := "http://1202283709788407.mns.cn-hangzhou.aliyuncs.com"
+	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
 	queueName := "test-queue"
 	topicName := "test-topic"
 	queueSubName := "test-sub-queue"

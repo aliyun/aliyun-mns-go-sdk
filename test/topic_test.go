@@ -1,7 +1,6 @@
 package test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/aliyun/aliyun-mns-go-sdk"
@@ -11,8 +10,8 @@ func createTopicTestClient() (ali_mns.MNSClient, error) {
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
 	return ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
-		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
-		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
 		Region:           "cn-hangzhou",
 	})
 }
