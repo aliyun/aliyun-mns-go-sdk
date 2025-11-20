@@ -10,31 +10,23 @@ import (
 
 func main() {
 	// Replace with your own endpoint.
-	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	endpoint := "http://1202283709788407.mns.cn-hangzhou.aliyuncs.com"
 	queueName := "test-queue"
 	topicName := "test-topic"
 	queueSubName := "test-sub-queue"
 	httpSubName := "test-sub-http"
-	// 0 create a client with endpoint
 	// client, e := ali_mns.NewClient(endpoint)
-
-	// 0.1 create a client with endpoint or config
-	// client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
-	// 	EndPoint:         endpoint,
-	// 	AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
-	// 	AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
-	// })
-
-	// 0.2 create a client with endpoint or config and options
-	client := ali_mns.NewAliMNSClientWithConfigAndOptions(ali_mns.AliMNSClientConfig{
+	client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
 		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
 		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
-	}, &ali_mns.ClientOptions{
-		Region: "cn-hangzhou",
+		Region:           "cn-beijing",
 	},
 	)
-
+	if e != nil {
+		fmt.Println(e)
+		return
+	}
 	
 
 	// 1. create a queue for receiving pushed messages
@@ -54,7 +46,7 @@ func main() {
 		return
 	}
 
-	topic := ali_mns.NewMNSTopic(topicName, client)
+	topic, e := ali_mns.NewMNSTopic(topicName, client)
 	
 	// 3. subscribe to topic, the endpoint is queue
 	queueSub := ali_mns.MessageSubsribeRequest{
@@ -115,7 +107,7 @@ func main() {
 	}
 
 	// 6. receive the message from queue
-	queue := ali_mns.NewMNSQueue(queueName, client)
+	queue, e := ali_mns.NewMNSQueue(queueName, client)
 	
 	endChan := make(chan int)
 	respChan := make(chan ali_mns.MessageReceiveResponse)

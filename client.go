@@ -6,11 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net/http"
 	neturl "net/url"
 	"os"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -88,24 +86,21 @@ type AliMNSClientConfig struct {
 	AccessKeyId     string
 	AccessKeySecret string
 	Token           string
+	Region          string
 	Credential      credentials.Credential
 	TimeoutSecond   int64
 	MaxConnsPerHost int
 }
 
-type ClientOptions struct {
-	Region			string
-}
-
 // NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClient(endpoint string) MNSClient {
-	return NewClientWithToken(endpoint, "")
+func NewClient(endpoint string, region string) (MNSClient, error) {
+	return NewClientWithToken(endpoint, "", region)
 }
 
 // NewClientWithToken Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClientWithToken(endpoint, token string) MNSClient {
+func NewClientWithToken(endpoint string, token string, region string) (MNSClient, error) {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        endpoint,
 		AccessKeyId:     os.Getenv(AliyunAkEnvKey),
@@ -113,40 +108,16 @@ func NewClientWithToken(endpoint, token string) MNSClient {
 		Token:           token,
 		TimeoutSecond:   DefaultTimeout,
 		MaxConnsPerHost: DefaultMaxConnsPerHost,
+		Region:          region,
 	})
 }
 
-// Deprecated: Use NewClient instead.
-func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) MNSClient {
-	return NewAliMNSClientWithConfig(AliMNSClientConfig{
-		EndPoint:        inputUrl,
-		AccessKeyId:     accessKeyId,
-		AccessKeySecret: accessKeySecret,
-		Token:           "",
-		TimeoutSecond:   DefaultTimeout,
-		MaxConnsPerHost: DefaultMaxConnsPerHost,
-	})
-}
-
-// Deprecated: Use NewClientWithToken instead.
-func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) MNSClient {
-	return NewAliMNSClientWithConfig(AliMNSClientConfig{
-		EndPoint:        inputUrl,
-		AccessKeyId:     accessKeyId,
-		AccessKeySecret: accessKeySecret,
-		Token:           token,
-		TimeoutSecond:   DefaultTimeout,
-		MaxConnsPerHost: DefaultMaxConnsPerHost,
-	})
-}
-
-func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) MNSClient {
-	return NewAliMNSClientWithConfigAndOptions(clientConfig, nil)
-}
-
-func newAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) (*aliMNSClient, error) {
+func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, error) {
 	if clientConfig.EndPoint == "" {
 		return nil, fmt.Errorf("ali-mns: message queue url is empty")
+	}
+	if clientConfig.Region == "" {
+		return nil, fmt.Errorf("ali-mns: region is empty")
 	}
 
 	cli := new(aliMNSClient)
@@ -187,7 +158,7 @@ func newAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, option
 		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
 
-	// 1. parse region and accountId
+	// 1. parse accountId
 	pieces := strings.Split(clientConfig.EndPoint, ".")
 	if len(pieces) != 5 {
 		return nil, fmt.Errorf("ali-mns: message queue url is invalid")
@@ -196,13 +167,7 @@ func newAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, option
 	accountIdSlice := strings.Split(pieces[0], "/")
 	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
 
-	if options != nil && options.Region != "" {
-		cli.region = options.Region
-	} else {
-		re := regexp.MustCompile("-(internal|control)")
-		regionSlice := re.Split(pieces[2], -1)
-		cli.region = regionSlice[0]
-	}
+	cli.region = clientConfig.Region
 
 	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
 		cli.proxyURL = globalUrl
@@ -212,21 +177,8 @@ func newAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, option
 	cli.initFastHttpClient()
 	//change to dial dual stack to support both ipv4 and ipv6
 	cli.client.DialDualStack = true
-	
+
 	return cli, nil
-}
-
-func NewAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) MNSClient {
-	client, err := newAliMNSClientWithConfigAndOptions(clientConfig, options)
-	if err != nil {
-		// If you need to handle errors, you should use the CreateAliMNSClientWithConfigAndOptions.
-		log.Fatal(err)
-	}
-	return client
-}
-
-func CreateAliMNSClientWithConfigAndOptions(clientConfig AliMNSClientConfig, options *ClientOptions) (MNSClient, error) {
-	return newAliMNSClientWithConfigAndOptions(clientConfig, options)
 }
 
 func (p aliMNSClient) GetAccountId() (accountId string) {

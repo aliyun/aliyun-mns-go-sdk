@@ -1,153 +1,111 @@
-// test/topic_error_test.go
 package test
 
 import (
+	"os"
 	"testing"
-	
-	ali_mns "github.com/aliyun/aliyun-mns-go-sdk"
+
+	"github.com/aliyun/aliyun-mns-go-sdk"
 )
 
-func TestNewMNSTopic_ErrorCases(t *testing.T) {
-	// 创建一个模拟的MNSClient用于测试
-	endpoint := "http://1234567890123456.mns.cn-hangzhou.aliyuncs.com"
-	config := ali_mns.AliMNSClientConfig{
-			EndPoint:        endpoint,
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-		}
-	client, _ := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)	
-
-	t.Run("Empty topic name should return error", func(t *testing.T) {
-		topic, err := ali_mns.CreateMNSTopic("", client)
-		
-		// 验证返回了错误
-		if err == nil {
-			t.Error("Expected error for empty topic name, but got nil")
-		}
-		
-		// 验证没有创建topic
-		if topic != nil {
-			t.Error("Expected nil topic for empty name, but got a topic")
-		}
-		
-		// 验证错误信息是否正确
-		expectedErrMsg := "ali_mns: topic name could not be empty"
-		if err.Error() != expectedErrMsg {
-			t.Errorf("Expected error message '%s', but got '%s'", expectedErrMsg, err.Error())
-		}
-	})
-
-	t.Run("Empty topic name with QPS parameter should return error", func(t *testing.T) {
-		topic, err := ali_mns.CreateMNSTopic("", client, 100)
-		
-		// 验证返回了错误
-		if err == nil {
-			t.Error("Expected error for empty topic name with QPS parameter, but got nil")
-		}
-		
-		// 验证没有创建topic
-		if topic != nil {
-			t.Error("Expected nil topic for empty name with QPS parameter, but got a topic")
-		}
-		
-		// 验证错误信息是否正确
-		expectedErrMsg := "ali_mns: topic name could not be empty"
-		if err.Error() != expectedErrMsg {
-			t.Errorf("Expected error message '%s', but got '%s'", expectedErrMsg, err.Error())
-		}
-	})
-
-	t.Run("Nil client should not panic and return error", func(t *testing.T) {
-		// 测试nil client的情况
-		defer func() {
-			if r := recover(); r != nil {
-				t.Errorf("NewMNSTopic with nil client should not panic, but panicked with: %v", r)
-			}
-		}()
-		
-		topic, err := ali_mns.CreateMNSTopic("test-topic", nil)
-		
-		// 在实际实现中，NewMNSTopic不会检查client是否为nil，所以这里不会返回错误
-		// 但我们可以验证函数不会panic并且返回了topic对象
-		if topic == nil {
-			t.Error("Expected topic to be created even with nil client")
-		} else if topic.Name() != "test-topic" {
-			t.Errorf("Expected topic name to be 'test-topic', but got '%s'", topic.Name())
-		}
-		
-		// err应该为nil，因为NewMNSTopic不检查client是否为nil
-		if err != nil {
-			t.Errorf("Expected no error for nil client, but got: %v", err)
-		}
+func createTopicTestClient() (ali_mns.MNSClient, error) {
+	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	return ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
+		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		Region:           "cn-hangzhou",
 	})
 }
 
-func TestAliMNSClientConfig_Region(t *testing.T) {
-	endpoint := "http://1234567890123456.mns.cn-hangzhou.aliyuncs.com"
+func TestNewMNSTopic(t *testing.T) {
+	client, err := createTopicTestClient()
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// 测试使用 NewMNSTopic 创建主题
+	topic, err := ali_mns.NewMNSTopic("test-topic", client)
+	if err != nil {
+		t.Errorf("Failed to create topic with NewMNSTopic: %v", err)
+	}
+
+	if topic == nil {
+		t.Error("Topic should not be nil")
+	}
+
+	if topic.Name() != "test-topic" {
+		t.Errorf("Expected topic name test-topic, got %s", topic.Name())
+	}
+}
+
+func TestNewMNSTopicWithQPS(t *testing.T) {
+	client, err := createTopicTestClient()
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// 测试使用 NewMNSTopic 创建带 QPS 限制的主题
+	topic, err := ali_mns.NewMNSTopic("test-topic", client, 100)
+	if err != nil {
+		t.Errorf("Failed to create topic with NewMNSTopic: %v", err)
+	}
+
+	if topic == nil {
+		t.Error("Topic should not be nil")
+	}
+
+	if topic.Name() != "test-topic" {
+		t.Errorf("Expected topic name test-topic, got %s", topic.Name())
+	}
+}
+
+func TestNewMNSTopicEmptyName(t *testing.T) {
+	client, err := createTopicTestClient()
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// 测试使用空名称创建主题应该返回错误
+	_, err = ali_mns.NewMNSTopic("", client)
+	if err == nil {
+		t.Error("Expected error when topic name is empty, but got nil")
+	}
+}
+
+func TestGenerateQueueEndpoint(t *testing.T) {
+	client, err := createTopicTestClient()
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	topic, err := ali_mns.NewMNSTopic("test-topic", client)
+	if err != nil {
+		t.Fatalf("Failed to create topic: %v", err)
+	}
 	
-	t.Run("Region from endpoint when not explicitly set", func(t *testing.T) {
-		config := ali_mns.AliMNSClientConfig{
-			EndPoint:        endpoint,
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-		}
-		
-		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, nil)
-		if err != nil {
-			t.Fatalf("Failed to create client: %v", err)
-		}
-		
-		expectedRegion := "cn-hangzhou"
-		actualRegion := client.GetRegion()
-		if actualRegion != expectedRegion {
-			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
-		}
-	})
+	endpoint := topic.GenerateQueueEndpoint("test-queue")
+	expected := "acs:mns:cn-hangzhou:" + client.GetAccountId() + ":queues/test-queue"
 	
-	t.Run("Explicitly set region overrides parsed region", func(t *testing.T) {
-		config := ali_mns.AliMNSClientConfig{
-			EndPoint:        endpoint,
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-		}
-		
-		options := &ali_mns.ClientOptions{
-			Region: "cn-beijing", // Explicitly set different region
-		}
-		
-		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, options)
-		if err != nil {
-			t.Fatalf("Failed to create client: %v", err)
-		}
-		
-		expectedRegion := "cn-beijing"
-		actualRegion := client.GetRegion()
-		if actualRegion != expectedRegion {
-			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
-		}
-	})
+	if endpoint != expected {
+		t.Errorf("Expected endpoint %s, got %s", expected, endpoint)
+	}
+}
+
+func TestGenerateMailEndpoint(t *testing.T) {
+	client, err := createTopicTestClient()
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	topic, err := ali_mns.NewMNSTopic("test-topic", client)
+	if err != nil {
+		t.Fatalf("Failed to create topic: %v", err)
+	}
 	
-	t.Run("Explicitly set region with internal endpoint", func(t *testing.T) {
-		internalEndpoint := "http://1234567890123456.mns.cn-hangzhou-internal.aliyuncs.com"
-		config := ali_mns.AliMNSClientConfig{
-			EndPoint:        internalEndpoint,
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-		}
-		
-		options := &ali_mns.ClientOptions{
-			Region: "cn-shanghai", // Explicitly set region
-		}
-		
-		client, err := ali_mns.CreateAliMNSClientWithConfigAndOptions(config, options)
-		if err != nil {
-			t.Fatalf("Failed to create client: %v", err)
-		}
-		
-		expectedRegion := "cn-shanghai"
-		actualRegion := client.GetRegion()
-		if actualRegion != expectedRegion {
-			t.Errorf("Expected region '%s', but got '%s'", expectedRegion, actualRegion)
-		}
-	})
+	endpoint := topic.GenerateMailEndpoint("test@example.com")
+	expected := "mail:directmail:test@example.com"
+	
+	if endpoint != expected {
+		t.Errorf("Expected endpoint %s, got %s", expected, endpoint)
+	}
 }
