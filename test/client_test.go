@@ -8,6 +8,14 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
+	// 临时设置环境变量
+    os.Setenv("ALIBABA_CLOUD_ACCESS_KEY_ID", "test-access-key-id")
+    os.Setenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET", "test-access-key-secret")
+    defer func() {
+        // 测试结束后清理环境变量
+        os.Unsetenv("ALIBABA_CLOUD_ACCESS_KEY_ID")
+        os.Unsetenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET")
+    }() 
 	// 测试使用 NewClient 创建客户端
 	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
 	client, err := ali_mns.NewClient(endpoint, "cn-hangzhou")
