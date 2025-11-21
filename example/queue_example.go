@@ -50,7 +50,11 @@ func main() {
 		return
 	}
 
-	queue, e := ali_mns.NewMNSQueue(queueName, client)
+ queue, e := ali_mns.NewMNSQueue(queueName, client)
+ 	if e != nil {
+ 		fmt.Println(e)
+ 		return
+ 	}
 	
 	for i := 1; i < 10; i++ {
 		ret, err := queue.SendMessage(msg)
