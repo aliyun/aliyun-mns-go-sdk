@@ -306,7 +306,7 @@ func initMNSErrors() {
 		"InvalidAuthorizationHeader":  ERR_MNS_INVALID_AUTHORIZATION_HEADER,
 		"InvalidDateHeader":           ERR_MNS_INVALID_DATE_HEADER,
 		"InvalidArgument":             ERR_MNS_INVALID_ARGUMENT,
-		"InvalidDegist":               ERR_MNS_INVALID_DIGEST,
+		"InvalidDigest":               ERR_MNS_INVALID_DIGEST,
 		"InvalidRequestURL":           ERR_MNS_INVALID_REQUEST_URL,
 		"InvalidQueryString":          ERR_MNS_INVALID_QUERY_STRING,
 		"MalformedXML":                ERR_MNS_MALFORMED_XML,
