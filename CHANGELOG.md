@@ -3,12 +3,14 @@
 ## 2.0.0
 - Major version upgrade to 2.0.0
 - Support explicit region configuration in AliMNSClientConfig
+- Use explicitly configured region to construct subscription endpoint/ARN instead of parsing from endpoint URL
 - Remove panic from client initialization, return errors instead
 - Remove deprecated client creation methods
 - Simplify client configuration with AliMNSClientConfig
 - Update examples to use unified AliMNSClientConfig
-- ⚠️ **Breaking Changes**: This version includes incompatible changes with v1.x. Please check the migration guide before upgrading.
-
+- ⚠️ **Breaking Changes**: 
+  - AliMNSClientConfig's region property is now required. Failure to provide it will result in an error "ali-mns: region is empty" during client initialization
+  - Subscription endpoints now use the explicitly configured region rather than attempting to parse region information from the endpoint URL
 
 ## 1.0.11
 - Updated version number to 1.0.11 with no other changes.
