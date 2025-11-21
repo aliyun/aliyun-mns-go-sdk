@@ -16,7 +16,7 @@ type AliMNSTopic interface {
 
 	PublishMessage(message MessagePublishRequest) (resp MessageSendResponse, err error)
 
-	Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error)
+	Subscribe(subscriptionName string, message MessageSubscribeRequest) (err error)
 	SetSubscriptionAttributes(subscriptionName string, notifyStrategy NotifyStrategyType) (err error)
 	GetSubscriptionAttributes(subscriptionName string) (attr SubscriptionAttribute, err error)
 	Unsubscribe(subscriptionName string) (err error)
@@ -33,21 +33,21 @@ type MNSTopic struct {
 }
 
 func NewMNSTopic(name string, client MNSClient, qps ...int32) (AliMNSTopic, error) {
-    if name == "" {
-        return nil, fmt.Errorf("ali_mns: topic name could not be empty")
-    }
+	if name == "" {
+		return nil, fmt.Errorf("ali_mns: topic name could not be empty")
+	}
 
-    topic := new(MNSTopic)
-    topic.client = client
-    topic.name = name
-    topic.decoder = NewAliMNSDecoder()
+	topic := new(MNSTopic)
+	topic.client = client
+	topic.name = name
+	topic.decoder = NewAliMNSDecoder()
 
-    qpsLimit := DefaultTopicQPSLimit
-    if qps != nil && len(qps) == 1 && qps[0] > 0 {
-        qpsLimit = qps[0]
-    }
-    topic.qpsMonitor = NewQPSMonitor(5, qpsLimit)
-    return topic, nil
+	qpsLimit := DefaultTopicQPSLimit
+	if qps != nil && len(qps) == 1 && qps[0] > 0 {
+		qpsLimit = qps[0]
+	}
+	topic.qpsMonitor = NewQPSMonitor(5, qpsLimit)
+	return topic, nil
 }
 
 func (p *MNSTopic) Name() string {
@@ -68,7 +68,7 @@ func (p *MNSTopic) PublishMessage(message MessagePublishRequest) (resp MessageSe
 	return
 }
 
-func (p *MNSTopic) Subscribe(subscriptionName string, message MessageSubsribeRequest) (err error) {
+func (p *MNSTopic) Subscribe(subscriptionName string, message MessageSubscribeRequest) (err error) {
 	subscriptionName = strings.TrimSpace(subscriptionName)
 
 	if err = checkTopicName(subscriptionName); err != nil {
@@ -138,7 +138,7 @@ func (p *MNSTopic) ListSubscriptionByTopic(nextMarker string, retNumber int32, p
 	}
 
 	if retNumber > 0 {
-		if retNumber >= 1 && retNumber <= 1000 {
+		if retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
 			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
@@ -167,7 +167,7 @@ func (p *MNSTopic) ListSubscriptionDetailByTopic(nextMarker string, retNumber in
 	}
 
 	if retNumber > 0 {
-		if retNumber >= 1 && retNumber <= 1000 {
+		if retNumber <= 1000 {
 			header["x-mns-ret-number"] = strconv.Itoa(int(retNumber))
 		} else {
 			err = ERR_MNS_RET_NUMBER_RANGE_ERROR.New()
