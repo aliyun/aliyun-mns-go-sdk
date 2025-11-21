@@ -1,5 +1,15 @@
 # Change log
 
+## 2.0.0
+- Major version upgrade to 2.0.0
+- Support explicit region configuration in AliMNSClientConfig
+- Remove panic from client initialization, return errors instead
+- Remove deprecated client creation methods
+- Simplify client configuration with AliMNSClientConfig
+- Update examples to use unified AliMNSClientConfig
+- ⚠️ **Breaking Changes**: This version includes incompatible changes with v1.x. Please check the migration guide before upgrading.
+
+
 ## 1.0.11
 - Updated version number to 1.0.11 with no other changes.
 
