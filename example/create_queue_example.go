@@ -10,7 +10,6 @@ import (
 func main() {
 	// Replace with your own endpoint.
 	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
-	// client, error := ali_mns.NewClient(endpoint, "cn-hangzhou")
 	client, error := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
 		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),

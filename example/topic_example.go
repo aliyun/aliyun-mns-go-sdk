@@ -15,7 +15,6 @@ func main() {
 	topicName := "test-topic"
 	queueSubName := "test-sub-queue"
 	httpSubName := "test-sub-http"
-	// client, e := ali_mns.NewClient(endpoint)
 	client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
 		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),

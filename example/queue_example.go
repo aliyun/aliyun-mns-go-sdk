@@ -21,7 +21,6 @@ func main() {
 	// Replace with your own endpoint.
 	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
 	isBase64 := os.Getenv("IS_BASE64") == "true"
-	// client, e := ali_mns.NewClient(endpoint, "cn-hangzhou")
 	client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
 		EndPoint:         endpoint,
 		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
