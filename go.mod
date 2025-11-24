@@ -1,6 +1,6 @@
 module github.com/aliyun/aliyun-mns-go-sdk
 
-go 1.20.0
+go 1.20
 
 require (
 	github.com/aliyun/credentials-go v1.3.10

@@ -21,7 +21,16 @@ func main() {
 	// Replace with your own endpoint.
 	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
 	isBase64 := os.Getenv("IS_BASE64") == "true"
-	client := ali_mns.NewClient(endpoint)
+	client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
+		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		Region:           "cn-hangzhou",
+	})
+	if e != nil {
+		fmt.Println(e)
+		return
+	}
 	messageBody := "hello <\"aliyun-mns-go-sdk\">"
 	if isBase64 {
 		messageBody = base64.StdEncoding.EncodeToString([]byte(messageBody))
@@ -41,7 +50,12 @@ func main() {
 		return
 	}
 
-	queue := ali_mns.NewMNSQueue(queueName, client)
+ queue, e := ali_mns.NewMNSQueue(queueName, client)
+ 	if e != nil {
+ 		fmt.Println(e)
+ 		return
+ 	}
+	
 	for i := 1; i < 10; i++ {
 		ret, err := queue.SendMessage(msg)
 		go func() {
