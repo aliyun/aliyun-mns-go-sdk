@@ -2,23 +2,29 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/aliyun/aliyun-mns-go-sdk"
 	"github.com/gogap/logs"
+	"os"
+	"time"
 )
 
 func main() {
 	// Replace with your own endpoint.
-	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
 	queueName := "test-queue"
 	topicName := "test-topic"
 	queueSubName := "test-sub-queue"
 	httpSubName := "test-sub-http"
-	client, e := ali_mns.NewClient(endpoint)
+	client, e := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:        endpoint,
+		AccessKeyId:     os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
+		AccessKeySecret: os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		Region:          "cn-beijing",
+	},
+	)
 	if e != nil {
-		log.Fatal(e)
+		fmt.Println(e)
+		return
 	}
 
 	// 1. create a queue for receiving pushed messages
@@ -38,18 +44,16 @@ func main() {
 		return
 	}
 
-	topic, err := ali_mns.NewMNSTopic(topicName, client)
-	if err != nil {
-		log.Fatal(err)
-	}
+	topic, e := ali_mns.NewMNSTopic(topicName, client)
+
 	// 3. subscribe to topic, the endpoint is queue
-	queueSub := ali_mns.MessageSubsribeRequest{
+	queueSub := ali_mns.MessageSubscribeRequest{
 		Endpoint:            topic.GenerateQueueEndpoint(queueName),
 		NotifyContentFormat: ali_mns.SIMPLIFIED,
 	}
 
 	// 4. subscribe to topic, the endpoint is HTTP(S)
-	httpSub := ali_mns.MessageSubsribeRequest{
+	httpSub := ali_mns.MessageSubscribeRequest{
 		Endpoint:            "http://www.baidu.com",
 		NotifyContentFormat: ali_mns.SIMPLIFIED,
 	}
@@ -71,7 +75,7 @@ func main() {
 			https://help.aliyun.com/document_detail/27434.html
 			before using mail push
 
-			sub = ali_mns.MessageSubsribeRequest{
+			sub = ali_mns.MessageSubscribeRequest{
 		        Endpoint:  topic.GenerateMailEndpoint("a@b.com"),
 		        NotifyContentFormat: ali_mns.SIMPLIFIED,
 		    }
@@ -101,10 +105,8 @@ func main() {
 	}
 
 	// 6. receive the message from queue
-	queue, err := ali_mns.NewMNSQueue(queueName, client)
-	if err != nil {
-		log.Fatal(err)
-	}
+	queue, e := ali_mns.NewMNSQueue(queueName, client)
+
 	endChan := make(chan int)
 	respChan := make(chan ali_mns.MessageReceiveResponse)
 	errChan := make(chan error)

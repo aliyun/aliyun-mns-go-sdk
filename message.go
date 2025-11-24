@@ -121,7 +121,7 @@ type ReceiptHandles struct {
 	ReceiptHandles []string `xml:"ReceiptHandle"`
 }
 
-type MessageSubsribeRequest struct {
+type MessageSubscribeRequest struct {
 	XMLName             xml.Name                `xml:"Subscription"`
 	Endpoint            string                  `xml:"Endpoint"`
 	FilterTag           string                  `xml:"FilterTag,omitempty"`

@@ -3,16 +3,22 @@ package main
 import (
 	"fmt"
 	ali_mns "github.com/aliyun/aliyun-mns-go-sdk"
-	"log"
+	"os"
 	"time"
 )
 
 func main() {
 	// Replace with your own endpoint.
 	endpoint := "http://***.mns.cn-hangzhou.aliyuncs.com"
-	client, e := ali_mns.NewClient(endpoint)
-	if e != nil {
-		log.Fatal(e)
+	client, error := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"),
+		AccessKeySecret:  os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"),
+		Region:           "cn-hangzhou",
+	})
+	if error != nil {
+		fmt.Println(error)
+		return
 	}
 	queueManager := ali_mns.NewMNSQueueManager(client)
 	queueName := "go-test-queue"

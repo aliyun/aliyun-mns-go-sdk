@@ -6,11 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net/http"
 	neturl "net/url"
 	"os"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -66,8 +64,8 @@ type MNSClient interface {
 	Send(method Method, headers map[string]string, message interface{}, resource string) (*fasthttp.Response, error)
 	SetProxy(url string)
 	SetTransport(transport fasthttp.RoundTripper)
-	getAccountId() (accountId string)
-	getRegion() (region string)
+	GetAccountId() (accountId string)
+	GetRegion() (region string)
 }
 
 type aliMNSClient struct {
@@ -88,6 +86,7 @@ type AliMNSClientConfig struct {
 	AccessKeyId     string
 	AccessKeySecret string
 	Token           string
+	Region          string
 	Credential      credentials.Credential
 	TimeoutSecond   int64
 	MaxConnsPerHost int
@@ -95,13 +94,13 @@ type AliMNSClientConfig struct {
 
 // NewClient Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClient(endpoint string) (MNSClient, error) {
-	return NewClientWithToken(endpoint, "")
+func NewClient(endpoint string, region string) (MNSClient, error) {
+	return NewClientWithToken(endpoint, "", region)
 }
 
 // NewClientWithToken Follow the Alibaba Cloud standards and set the AK (Access Key) and SK (Secret Key) in the environment variables.
 // For more details, see: https://help.aliyun.com/zh/sdk/developer-reference/configure-the-alibaba-cloud-accesskey-environment-variable-on-linux-macos-and-windows-systems
-func NewClientWithToken(endpoint, token string) (MNSClient, error) {
+func NewClientWithToken(endpoint string, token string, region string) (MNSClient, error) {
 	return NewAliMNSClientWithConfig(AliMNSClientConfig{
 		EndPoint:        endpoint,
 		AccessKeyId:     os.Getenv(AliyunAkEnvKey),
@@ -109,36 +108,16 @@ func NewClientWithToken(endpoint, token string) (MNSClient, error) {
 		Token:           token,
 		TimeoutSecond:   DefaultTimeout,
 		MaxConnsPerHost: DefaultMaxConnsPerHost,
-	})
-}
-
-// Deprecated: Use NewClient instead.
-func NewAliMNSClient(inputUrl, accessKeyId, accessKeySecret string) (MNSClient, error) {
-	return NewAliMNSClientWithConfig(AliMNSClientConfig{
-		EndPoint:        inputUrl,
-		AccessKeyId:     accessKeyId,
-		AccessKeySecret: accessKeySecret,
-		Token:           "",
-		TimeoutSecond:   DefaultTimeout,
-		MaxConnsPerHost: DefaultMaxConnsPerHost,
-	})
-}
-
-// Deprecated: Use NewClientWithToken instead.
-func NewAliMNSClientWithToken(inputUrl, accessKeyId, accessKeySecret, token string) (MNSClient, error) {
-	return NewAliMNSClientWithConfig(AliMNSClientConfig{
-		EndPoint:        inputUrl,
-		AccessKeyId:     accessKeyId,
-		AccessKeySecret: accessKeySecret,
-		Token:           token,
-		TimeoutSecond:   DefaultTimeout,
-		MaxConnsPerHost: DefaultMaxConnsPerHost,
+		Region:          region,
 	})
 }
 
 func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, error) {
 	if clientConfig.EndPoint == "" {
 		return nil, fmt.Errorf("ali-mns: message queue url is empty")
+	}
+	if clientConfig.Region == "" {
+		return nil, fmt.Errorf("ali-mns: region is empty")
 	}
 
 	cli := new(aliMNSClient)
@@ -154,7 +133,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 		var err error
 		cli.credential, err = credentials.NewCredential(config)
 		if err != nil {
-			log.Fatal(err)
+			return nil, fmt.Errorf("failed to create sts credential: %w", err)
 		}
 	} else {
 		config := new(credentials.Config).
@@ -164,7 +143,7 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 		var err error
 		cli.credential, err = credentials.NewCredential(config)
 		if err != nil {
-			log.Fatal(err)
+			return nil, fmt.Errorf("failed to create access key credential: %w", err)
 		}
 	}
 
@@ -176,20 +155,20 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 
 	var err error
 	if cli.url, err = neturl.Parse(clientConfig.EndPoint); err != nil {
-		log.Fatal("err parse url")
+		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
 
-	// 1. parse region and accountId
+	// 1. parse accountId
 	pieces := strings.Split(clientConfig.EndPoint, ".")
 	if len(pieces) != 5 {
-		log.Fatal("ali-mns: message queue url is invalid")
+		return nil, fmt.Errorf("ali-mns: message queue url is invalid")
 	}
 
 	accountIdSlice := strings.Split(pieces[0], "/")
 	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
-	re := regexp.MustCompile("-(internal|control)")
-	regionSlice := re.Split(pieces[2], -1)
-	cli.region = regionSlice[0]
+
+	cli.region = clientConfig.Region
+
 	if globalUrl := os.Getenv(GlobalProxy); globalUrl != "" {
 		cli.proxyURL = globalUrl
 	}
@@ -198,14 +177,15 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 	cli.initFastHttpClient()
 	//change to dial dual stack to support both ipv4 and ipv6
 	cli.client.DialDualStack = true
+
 	return cli, nil
 }
 
-func (p aliMNSClient) getAccountId() (accountId string) {
+func (p aliMNSClient) GetAccountId() (accountId string) {
 	return p.accountId
 }
 
-func (p aliMNSClient) getRegion() (region string) {
+func (p aliMNSClient) GetRegion() (region string) {
 	return p.region
 }
 
@@ -326,7 +306,7 @@ func initMNSErrors() {
 		"InvalidAuthorizationHeader":  ERR_MNS_INVALID_AUTHORIZATION_HEADER,
 		"InvalidDateHeader":           ERR_MNS_INVALID_DATE_HEADER,
 		"InvalidArgument":             ERR_MNS_INVALID_ARGUMENT,
-		"InvalidDegist":               ERR_MNS_INVALID_DEGIST,
+		"InvalidDigest":               ERR_MNS_INVALID_DIGEST,
 		"InvalidRequestURL":           ERR_MNS_INVALID_REQUEST_URL,
 		"InvalidQueryString":          ERR_MNS_INVALID_QUERY_STRING,
 		"MalformedXML":                ERR_MNS_MALFORMED_XML,
@@ -348,9 +328,9 @@ func initMNSErrors() {
 		"TopicAlreadyExist":           ERR_MNS_TOPIC_ALREADY_EXIST,
 		"TopicNameLengthError":        ERR_MNS_TOPIC_NAME_LENGTH_ERROR,
 		"TopicNotExist":               ERR_MNS_TOPIC_NOT_EXIST,
-		"SubscriptionNameLengthError": ERR_MNS_SUBSRIPTION_NAME_LENGTH_ERROR,
+		"SubscriptionNameLengthError": ERR_MNS_SUBSCRIPTION_NAME_LENGTH_ERROR,
 		"TopicNameInvalid":            ERR_MNS_INVALID_TOPIC_NAME,
-		"SubsriptionNameInvalid":      ERR_MNS_INVALID_SUBSCRIPTION_NAME,
+		"SubscriptionNameInvalid":     ERR_MNS_INVALID_SUBSCRIPTION_NAME,
 		"SubscriptionAlreadyExist":    ERR_MNS_SUBSCRIPTION_ALREADY_EXIST,
 		"EndpointInvalid":             ERR_MNS_INVALID_ENDPOINT,
 		"SubscriberNotExist":          ERR_MNS_SUBSCRIBER_NOT_EXIST,

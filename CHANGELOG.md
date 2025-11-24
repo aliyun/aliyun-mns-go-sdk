@@ -1,5 +1,19 @@
 # Change log
 
+## 2.0.0 
+This is a major version upgrade that introduces breaking changes. Please read carefully before upgrading.
+
+### ⚠️ Breaking Changes
+- **Region Configuration is Now Required**: The `region` field in `AliMNSClientConfig` is now mandatory. Client initialization will fail with error "ali-mns: region is empty" if not provided.
+- **Region-Dependent Subscription Endpoints**: Subscription endpoints now use the explicitly configured region instead of attempting to parse from endpoint URL.
+
+### Other Changes
+- Fixed [issue#28](https://github.com/aliyun/aliyun-mns-go-sdk/issues/28): Remove panic from client initialization, return errors instead.
+- Remove deprecated client creation methods.
+- Simplify client configuration with `AliMNSClientConfig`.
+- Update examples to use unified `AliMNSClientConfig`.
+- Fixed some spelling errors.
+
 ## 1.0.11
 - Updated version number to 1.0.11 with no other changes.
 
@@ -30,14 +44,11 @@
 - support custom maxConnsPerHost value for the client.
 
 ## 1.0.3
-
 - support custom transport configuration
 
 ## 1.0.2
-
 - support OpenService API
 
 ## 1.0.1
-
 - support setting timeout
 - add request id to response

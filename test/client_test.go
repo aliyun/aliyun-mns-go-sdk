@@ -1,64 +1,87 @@
-// test/client_empty_endpoint_test.go
 package test
 
 import (
 	"testing"
-	
-	ali_mns "github.com/aliyun/aliyun-mns-go-sdk"
+
+	"github.com/aliyun/aliyun-mns-go-sdk"
 )
 
-func TestNewAliMNSClientWithConfig_EmptyEndpoint(t *testing.T) {
-	t.Run("Empty endpoint should return error", func(t *testing.T) {
-		// 测试当EndPoint为空字符串时的情况
-		config := ali_mns.AliMNSClientConfig{
-			EndPoint:        "", // 空的EndPoint
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-		}
-		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
-		
-		// 验证返回了错误
-		if err == nil {
-			t.Error("Expected error for empty endpoint, but got nil")
-		}
-		
-		// 验证没有创建client
-		if client != nil {
-			t.Error("Expected nil client for empty endpoint, but got a client")
-		}
-		
-		// 验证错误信息是否正确
-		expectedErrMsg := "ali-mns: message queue url is empty"
-		if err.Error() != expectedErrMsg {
-			t.Errorf("Expected error message '%s', but got '%s'", expectedErrMsg, err.Error())
-		}
-	})
 
-	t.Run("Nil endpoint should return error", func(t *testing.T) {
-		// 测试当EndPoint为完全省略(默认零值)时的情况
-		config := ali_mns.AliMNSClientConfig{
-			// EndPoint未设置，使用默认零值""
-			AccessKeyId:     "test-access-key-id",
-			AccessKeySecret: "test-access-key-secret",
-		}
-		
-		client, err := ali_mns.NewAliMNSClientWithConfig(config)
-		
-		// 验证返回了错误
-		if err == nil {
-			t.Error("Expected error for nil endpoint, but got nil")
-		}
-		
-		// 验证没有创建client
-		if client != nil {
-			t.Error("Expected nil client for nil endpoint, but got a client")
-		}
-		
-		// 验证错误信息是否正确
-		expectedErrMsg := "ali-mns: message queue url is empty"
-		if err.Error() != expectedErrMsg {
-			t.Errorf("Expected error message '%s', but got '%s'", expectedErrMsg, err.Error())
-		}
+
+func TestNewAliMNSClientWithConfig(t *testing.T) {
+	// 测试使用 NewAliMNSClientWithConfig 创建客户端
+	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	client, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
+		Region:           "cn-hangzhou",
 	})
+	if err != nil {
+		t.Errorf("Failed to create client with NewAliMNSClientWithConfig: %v", err)
+	}
+
+	if client == nil {
+		t.Error("Client should not be nil")
+	}
+
+	// 验证 region 是否正确设置
+	region := client.GetRegion()
+	if region != "cn-hangzhou" {
+		t.Errorf("Expected region cn-hangzhou, got %s", region)
+	}
 }
+
+func TestNewAliMNSClientWithConfigRegionMismatch(t *testing.T) {
+	// 测试 endpoint 和 Region 中的 region 信息不一致的场景
+	// endpoint 中是 cn-hangzhou，但 Region 设置为 cn-beijing
+	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	client, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
+		Region:           "cn-beijing",
+	})
+	
+	if err != nil {
+		t.Errorf("Failed to create client with mismatched regions: %v", err)
+	}
+
+	if client == nil {
+		t.Error("Client should not be nil even with mismatched regions")
+	}
+
+	// 验证实际使用的 region 是配置中指定的值，而不是从 endpoint 解析的值
+	region := client.GetRegion()
+	if region != "cn-beijing" {
+		t.Errorf("Expected region cn-beijing (from config), got %s", region)
+	}
+}
+
+func TestNewAliMNSClientWithConfigWithoutRegion(t *testing.T) {
+	// 测试使用 NewAliMNSClientWithConfig 创建客户端但不设置 region
+	endpoint := "http://xxx.mns.cn-hangzhou.aliyuncs.com"
+	_, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         endpoint,
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
+		Region:           "",
+	})
+	if err == nil {
+		t.Error("Expected error when region is empty, but got nil")
+	}
+}
+
+func TestNewAliMNSClientWithConfigWithoutEndpoint(t *testing.T) {
+	// 测试使用 NewAliMNSClientWithConfig 创建客户端但不设置 endpoint
+	_, err := ali_mns.NewAliMNSClientWithConfig(ali_mns.AliMNSClientConfig{
+		EndPoint:         "",
+		AccessKeyId:      "ak",
+		AccessKeySecret:  "sk",
+		Region:           "cn-hangzhou",
+	})
+	if err == nil {
+		t.Error("Expected error when endpoint is empty, but got nil")
+	}
+}
+
