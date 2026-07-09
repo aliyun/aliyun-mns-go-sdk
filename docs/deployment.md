@@ -34,5 +34,5 @@
 ## 兼容性要点
 
 - 公开 API(导出的类型 / 函数 / 方法签名)不得 breaking change(constitution C-A1);确需 breaking 时按 Go module 语义升 major 版本。
-- endpoint 校验等初始化行为的**放宽**属兼容性增强(如 2.0.1 支持主权云 IDPT endpoint),须在 `CHANGELOG.md` 标注"向后兼容"。
+- endpoint 校验等初始化行为的**放宽**属兼容性增强(如 2.0.1 支持可变段数的 endpoint 域名),须在 `CHANGELOG.md` 标注"向后兼容"。
 - 回滚方式:代码版本回滚——消费方 `go get` 回退到上一版本即可,无运行时状态。

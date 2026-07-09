@@ -56,34 +56,34 @@ func TestNewAliMNSClientWithConfigRegionMismatch(t *testing.T) {
 	}
 }
 
-func TestNewAliMNSClientWithConfigIDPTEndpoints(t *testing.T) {
+func TestNewAliMNSClientWithConfigMultiSegmentEndpoints(t *testing.T) {
 	testCases := []struct {
 		name     string
 		endpoint string
 	}{
 		{
-			name:     "idpt public endpoint",
-			endpoint: "https://123.ap-paris-idpt.mns.idptcloud06api.alibaba",
+			name:     "standard endpoint",
+			endpoint: "https://123.mns.cn-hangzhou.example.com",
 		},
 		{
-			name:     "idpt oxs private endpoint",
-			endpoint: "https://123.mns-intranet.ap-paris-idpt.mns.idptcloud06api.alibaba",
+			name:     "internal network endpoint",
+			endpoint: "https://123.mns-internal.cn-hangzhou.mns.example.com",
 		},
 		{
-			name:     "idpt vpc private endpoint",
-			endpoint: "https://123.mns-bind-vpc.ap-paris-idpt.mns.idptcloud06api.alibaba",
+			name:     "vpc network endpoint",
+			endpoint: "https://123.mns-vpc.cn-hangzhou.mns.example.com",
 		},
 		{
-			name:     "idpt com root endpoint",
-			endpoint: "http://123.mns-bind-vpc.ap-jakarta-idpt2.mns.idptcloud03api.com",
+			name:     "alternate root domain endpoint",
+			endpoint: "http://123.mns-vpc.cn-shenzhen.mns.example.net",
 		},
 		{
-			name:     "jakarta idpt2 oxs private alibaba endpoint",
-			endpoint: "https://123.mns-intranet.ap-jakarta-idpt2.mns.idptcloud03api.alibaba",
+			name:     "another region internal endpoint",
+			endpoint: "https://123.mns-internal.cn-beijing.mns.example.net",
 		},
 		{
-			name:     "jakarta idpt legacy oxs private com endpoint",
-			endpoint: "https://123.ap-jakarta-idpt.mns-intranet.idptcloud02cs.com",
+			name:     "alternate label layout endpoint",
+			endpoint: "https://123.cn-shanghai.mns-internal.example.net",
 		},
 	}
 
@@ -93,10 +93,10 @@ func TestNewAliMNSClientWithConfigIDPTEndpoints(t *testing.T) {
 				EndPoint:        tt.endpoint,
 				AccessKeyId:     "ak",
 				AccessKeySecret: "sk",
-				Region:          "ap-paris-idpt",
+				Region:          "cn-hangzhou",
 			})
 			if err != nil {
-				t.Fatalf("Failed to create client with IDPT endpoint %s: %v", tt.endpoint, err)
+				t.Fatalf("Failed to create client with endpoint %s: %v", tt.endpoint, err)
 			}
 			if client.GetAccountId() != "123" {
 				t.Fatalf("Expected accountId 123, got %s", client.GetAccountId())

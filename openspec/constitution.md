@@ -55,7 +55,7 @@ AG=$(grep -oE '\*\*版本\*\* \| [0-9]+\.[0-9]+\.[0-9]+' AGENTS.md | grep -oE '[
 [ "$VER" = "$CL" ] && [ "$VER" = "$AG" ] && echo "OK $VER" || echo "MISMATCH version.go=$VER changelog=$CL agents=$AG"
 ```
 
-**Rationale**：升版本却漏改 CHANGELOG 是历史真实缺陷（go-sdk-idpt-endpoint-format change 首次暴露）。文档缺约束时 agent/人都会漏；本规则把它变成一条可机器校验的红线。
+**Rationale**：升版本却漏改 CHANGELOG 是历史真实缺陷（一次 endpoint 校验修复时首次暴露）。文档缺约束时 agent/人都会漏；本规则把它变成一条可机器校验的红线。
 
 ---
 

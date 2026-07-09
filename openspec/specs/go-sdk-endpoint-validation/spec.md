@@ -1,7 +1,7 @@
 # Spec: go-sdk-endpoint-validation
 
 > aliyun-mns-go-sdk Endpoint 初始化校验与 accountId 提取的权威行为契约（canonical）。
-> 归档来源：openspec change `go-sdk-idpt-endpoint-format`。
+> 归档来源：aliyun-mns-go-sdk endpoint 校验修复。
 
 ## Requirements
 
@@ -11,18 +11,18 @@ WHEN `NewAliMNSClientWithConfig` 接收合法 URI endpoint
 AND endpoint 的 host 非空
 THEN SDK 初始化不得因为 host 按 `.` 分割后的段数不是 5 而失败
 
-#### Scenario: 主权云公网 Endpoint
-- **GIVEN** endpoint 为 `https://123.ap-paris-idpt.mns.idptcloud06api.alibaba`
+#### Scenario: 多段公网 Endpoint
+- **GIVEN** endpoint 为 `https://123.mns.cn-hangzhou.example.com`
 - **WHEN** 调用 `NewAliMNSClientWithConfig`
 - **THEN** 返回非空 client 且无错误
 
-#### Scenario: 主权云 OXS 内网 Endpoint
-- **GIVEN** endpoint 为 `https://123.mns-intranet.ap-paris-idpt.mns.idptcloud06api.alibaba`
+#### Scenario: 内网 Endpoint
+- **GIVEN** endpoint 为 `https://123.mns-internal.cn-hangzhou.mns.example.com`
 - **WHEN** 调用 `NewAliMNSClientWithConfig`
 - **THEN** 返回非空 client 且无错误
 
-#### Scenario: 主权云 VPC 内网 Endpoint
-- **GIVEN** endpoint 为 `https://123.mns-bind-vpc.ap-paris-idpt.mns.idptcloud06api.alibaba`
+#### Scenario: VPC Endpoint
+- **GIVEN** endpoint 为 `https://123.mns-vpc.cn-hangzhou.mns.example.com`
 - **WHEN** 调用 `NewAliMNSClientWithConfig`
 - **THEN** 返回非空 client 且无错误
 
@@ -32,8 +32,8 @@ WHEN endpoint 为合法 URI
 THEN `GetAccountId()` 返回 host 中第一个 `.` 之前的 label
 AND 不从完整 endpoint 字符串中解析 accountId
 
-#### Scenario: 主权云 Endpoint accountId 提取
-- **GIVEN** endpoint 为 `https://123.mns-bind-vpc.ap-paris-idpt.mns.idptcloud06api.alibaba`
+#### Scenario: 多段 Endpoint accountId 提取
+- **GIVEN** endpoint 为 `https://123.mns-vpc.cn-hangzhou.mns.example.com`
 - **WHEN** client 创建成功
 - **THEN** `GetAccountId()` 返回 `123`
 
