@@ -159,13 +159,22 @@ func NewAliMNSClientWithConfig(clientConfig AliMNSClientConfig) (MNSClient, erro
 	}
 
 	// 1. parse accountId
-	pieces := strings.Split(clientConfig.EndPoint, ".")
-	if len(pieces) != 5 {
-		return nil, fmt.Errorf("ali-mns: message queue url is invalid")
+	host := cli.url.Hostname()
+	if host == "" {
+		if strings.Contains(clientConfig.EndPoint, "://") {
+			return nil, fmt.Errorf("ali-mns: message queue url is invalid")
+		}
+		host = clientConfig.EndPoint
+		if pathIndex := strings.Index(host, "/"); pathIndex >= 0 {
+			host = host[:pathIndex]
+		}
 	}
 
-	accountIdSlice := strings.Split(pieces[0], "/")
-	cli.accountId = accountIdSlice[len(accountIdSlice)-1]
+	pieces := strings.Split(host, ".")
+	if pieces[0] == "" {
+		return nil, fmt.Errorf("ali-mns: message queue url is invalid")
+	}
+	cli.accountId = pieces[0]
 
 	cli.region = clientConfig.Region
 

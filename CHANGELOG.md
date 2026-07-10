@@ -1,5 +1,8 @@
 # Change log
 
+## 2.0.1
+- Support MNS endpoint domains with a variable number of segments. `NewAliMNSClientWithConfig` no longer requires the endpoint host to have a fixed number of `.`-separated segments (previously exactly 5). The host is now derived from `net/url` `Hostname()` (with a bare-domain fallback for backward compatibility), and `accountId` is extracted from the first host label. This aligns with the Java SDK, which only validates the URI scheme and host. Backward compatible with existing endpoints.
+
 ## 2.0.0 
 This is a major version upgrade that introduces breaking changes. Please read carefully before upgrading.
 
