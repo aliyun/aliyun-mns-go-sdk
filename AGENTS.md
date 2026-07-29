@@ -8,8 +8,8 @@ MNS v1 官方 Go SDK,封装 smq proxy HTTP 数据面 API(队列收发消息、�
 |------|-----|
 | **名称** | aliyun-mns-go-sdk (MNS Go SDK) |
 | **语言** | Go 1.20+ |
-| **模块** | github.com/aliyun/aliyun-mns-go-sdk |
-| **版本** | 2.0.1 |
+| **模块** | github.com/aliyun/aliyun-mns-go-sdk/v2 |
+| **版本** | 2.0.2 |
 | **HTTP 库** | fasthttp (valyala/fasthttp) |
 | **认证** | aliyun/credentials-go |
 | **API 文档** | https://help.aliyun.com/zh/mns/developer-reference/ |

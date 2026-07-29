@@ -4,13 +4,13 @@
 
 ## 分发形态
 
-- **产物类型**:Go module 库(`github.com/aliyun/aliyun-mns-go-sdk`),供外部客户 `import` 使用,**不产出可执行服务 / 镜像 / 端口**。
+- **产物类型**:Go module 库(`github.com/aliyun/aliyun-mns-go-sdk/v2`),供外部客户 `import` 使用,**不产出可执行服务 / 镜像 / 端口**。
 - **消费方式**:
   ```bash
-  go get github.com/aliyun/aliyun-mns-go-sdk@<version>
+  go get github.com/aliyun/aliyun-mns-go-sdk/v2@<version>
   ```
 - **分发通道**:Go module proxy(goproxy)按 module path + version 提供下载。
-- **开发源 vs 发布源**:本仓(内部 gitlab `messaging/aliyun-mns-go-sdk`)是开发主仓;对外发布通过公开镜像仓 `github.com/aliyun/aliyun-mns-go-sdk` 打版本 tag。**本仓当前不承载 release tag。**
+- **开发源 vs 发布源**:本仓(内部 gitlab `messaging/aliyun-mns-go-sdk`)是开发主仓;对外发布通过公开镜像仓 `github.com/aliyun/aliyun-mns-go-sdk` 打版本 tag(v2+ 需使用 `/v2` 后缀)。**本仓当前不承载 release tag。**
 
 ## 版本一致性(硬约束)
 

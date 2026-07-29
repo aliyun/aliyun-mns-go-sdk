@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/aliyun/aliyun-mns-go-sdk"
+	"github.com/aliyun/aliyun-mns-go-sdk/v2"
 	"github.com/gogap/logs"
 )
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	ali_mns "github.com/aliyun/aliyun-mns-go-sdk"
+	ali_mns "github.com/aliyun/aliyun-mns-go-sdk/v2"
 	"os"
 	"time"
 )

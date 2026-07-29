@@ -21,8 +21,8 @@ Aliyun MNS Go SDK 是 MNS 在 Go 编译语言的官方 SDK
 
 ## 安装方法
 
-- 执行命令 `go get github.com/aliyun/aliyun-mns-go-sdk` 获取远程代码包
-- 在您的代码中通过 `import "github.com/aliyun/aliyun-mns-go-sdk"` 引入 MNS Go SDK
+- 执行命令 `go get github.com/aliyun/aliyun-mns-go-sdk/v2` 获取远程代码包
+- 在您的代码中通过 `import "github.com/aliyun/aliyun-mns-go-sdk/v2"` 引入 MNS Go SDK
 
 ## 快速使用
 

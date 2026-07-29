@@ -25,8 +25,8 @@ The Aliyun MNS Go SDK is the official SDK for MNS in the Go programming language
 
 ## Installing
 
-- Run the`go get github.com/aliyun/aliyun-mns-go-sdk` command to get the remote code package.
-- Use `import "github.com/aliyun/aliyun-mns-go-sdk"` in your code to introduce MNS Go SDK package
+- Run the`go get github.com/aliyun/aliyun-mns-go-sdk/v2` command to get the remote code package.
+- Use `import "github.com/aliyun/aliyun-mns-go-sdk/v2"` in your code to introduce MNS Go SDK package
 
 ## Getting Start
 

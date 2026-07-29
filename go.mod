@@ -1,4 +1,4 @@
-module github.com/aliyun/aliyun-mns-go-sdk
+module github.com/aliyun/aliyun-mns-go-sdk/v2
 
 go 1.20
 

@@ -1,5 +1,8 @@
 # Change log
 
+## 2.0.2
+- Migrate Go module path to `github.com/aliyun/aliyun-mns-go-sdk/v2` to comply with Go Modules v2+ major version suffix convention. All import paths in examples, tests, and documentation have been updated accordingly. Backward compatible for users who import via the `/v2` path.
+
 ## 2.0.1
 - Support MNS endpoint domains with a variable number of segments. `NewAliMNSClientWithConfig` no longer requires the endpoint host to have a fixed number of `.`-separated segments (previously exactly 5). The host is now derived from `net/url` `Hostname()` (with a bare-domain fallback for backward compatibility), and `accountId` is extracted from the first host label. This aligns with the Java SDK, which only validates the URI scheme and host. Backward compatible with existing endpoints.
 

@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/aliyun/aliyun-mns-go-sdk"
+	"github.com/aliyun/aliyun-mns-go-sdk/v2"
 )
 
 func TestNewAliMNSClientWithConfig(t *testing.T) {
